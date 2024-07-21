@@ -60,6 +60,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
   const [angles, setAngles] = useState(Array(knobs).fill(0));
   const [activeIndex, setActiveIndex] = useState(null);
   const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [lastSelectedColor, setLastSelectedColor] = useState(null);
   const [center, setCenter] = useState({ x: radius + knobRadius, y: radius + knobRadius });
   const [svgRect, setSvgRect] = useState(null);
   const svgRef = useRef(null);
@@ -98,6 +99,8 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
         setAngles((prevAngles) => {
           const newAngles = [...prevAngles];
           newAngles[index] = angle;
+          const color = hslToHex(angle, 100, 50);
+          setLastSelectedColor(color);
           if (onChange) {
             // round to nearest integer
             onChange(index, Math.round(angle));
@@ -142,6 +145,8 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
           newAngle = clampBetween(newAngle, angles[prevIndex], angles[nextIndex]);
         }
         newAngles[hoveredIndex] = newAngle;
+        const color = hslToHex(newAngle, 100, 50);
+        setLastSelectedColor(color);
         if (onChange) {
           onChange(hoveredIndex, Math.round(newAngle));
         }
@@ -220,6 +225,15 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
     );
   });
 
+  // Draw the center circle displaying the last selected color
+  const colorDisplay = () => {
+    const color = lastSelectedColor || '#000000';
+    return (
+      <circle cx={center.x} cy={center.y} r={knobRadius * 5} fill={color} />
+    );
+  };
+ 
+
   // Draw the knobs and hex values
   const knobElements = knobPositions.map((pos, index) => {
     const color = hslToHex(pos.angle, 100, 50);
@@ -268,6 +282,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
       {rainbowGradient}
       {outlines}
       {knobElements}
+      {colorDisplay()}
     </svg>
   );
 };
