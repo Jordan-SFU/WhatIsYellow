@@ -1,10 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import InfoBox from './InfoBox';
 import './CircularSlider.css';
 
-
-
-const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 10, strokeThickness = 3, size = 3, centerScale = 1, textValues = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple"], minimumDistance = 10, onChange }) => {
+const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 10, strokeThickness = 3, size = 3, centerScale = 1, textValues = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple"], minimumDistance = 10, onChange, initialPositions = [] }) => {
     // Utility function to convert degrees to radians
   const degToRad = (deg) => (deg * Math.PI) / 180;
 
@@ -134,43 +132,46 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
   };
 
   // Event handlers for dragging knobs
-  const handleMouseDown = (index) => (e) => {
+  const handleMouseDown = useCallback((index) => (e) => {
     e.stopPropagation();
     setActiveIndex(index);
     const onMouseMove = (moveEvent) => {
-      if (svgRect) {
-        const x = moveEvent.clientX - svgRect.left - center.x;
-        const y = moveEvent.clientY - svgRect.top - center.y;
-        let angle = clampAngle(getAngle(0, 0, x, y));
-        if (knobs > 1) {
-          const prevIndex = (index - 1 + knobs) % knobs;
-          const nextIndex = (index + 1) % knobs;
-          angle = clampBetween(angle, angles[prevIndex], angles[nextIndex]);
-        }
-        setAngles((prevAngles) => {
-          const newAngles = [...prevAngles];
-          newAngles[index] = angle;
-          const color = hslToHex(angle, 100, 50);
-          setLastSelectedColor(color);
-          if (onChange) {
-            // round to nearest integer
-            onChange(index, Math.round(angle));
+      requestAnimationFrame(() => {
+        if (svgRect) {
+          const x = moveEvent.clientX - svgRect.left - center.x;
+          const y = moveEvent.clientY - svgRect.top - center.y;
+          let angle = Math.round(clampAngle(getAngle(0, 0, x, y)));
+          if (knobs > 1) {
+            const prevIndex = (index - 1 + knobs) % knobs;
+            const nextIndex = (index + 1) % knobs;
+            angle = clampBetween(angle, angles[prevIndex], angles[nextIndex]);
           }
-          return newAngles;
-        });
-      }
+          setAngles((prevAngles) => {
+            if (prevAngles[index] !== angle) {
+              const newAngles = [...prevAngles];
+              newAngles[index] = angle;
+              const color = hslToHex(angle, 100, 50);
+              setLastSelectedColor(color);
+              if (onChange) {
+                onChange(index, Math.round(angle));
+              }
+              return newAngles;
+            }
+            return prevAngles;
+          });
+        }
+      });
     };
 
     const onMouseUp = () => {
       setActiveIndex(null);
-      
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
     };
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
-  };
+  }, [svgRect, center, knobs, angles, clampAngle, clampBetween, onChange]);
 
   // Event handlers for hovering knobs
   const handleMouseEnter = (index) => () => {
@@ -244,7 +245,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
 
   // Draw the center circle displaying the last selected color
   const colorDisplay = () => {
-    const color = lastSelectedColor || '#000000';
+    const color = lastSelectedColor || '#FF0000';
     return (
       <circle cx={center.x} cy={center.y} r={knobRadius * 5 * centerScale} fill={color} />
     );
@@ -284,66 +285,22 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
     );
   });
 
-  // draw an arc connecting the two knobs
-  const arc = (start, end) => {
-    // inner arc
-    const startAngle = degToRad(start);
-    const endAngle = degToRad(end);
-    const largeArcFlag = end - start <= 180 ? '0' : '1';
-    const d = [
-      'M',
-      center.x + (radius - thickness) * Math.cos(startAngle),
-      center.y + (radius - thickness) * Math.sin(startAngle),
-      'A',
-      radius - thickness,
-      radius - thickness,
-      0,
-      largeArcFlag,
-      1,
-      center.x + (radius - thickness) * Math.cos(endAngle),
-      center.y + (radius - thickness) * Math.sin(endAngle)
-    ].join(' ');
-
-    // outer arc
-    const startAngleOuter = degToRad(start);
-    const endAngleOuter = degToRad(end);
-    const largeArcFlagOuter = end - start <= 180 ? '0' : '1';
-    const dOuter = [
-      'M',
-      center.x + (radius + thickness) * Math.cos(startAngleOuter),
-      center.y + (radius + thickness) * Math.sin(startAngleOuter),
-      'A',
-      radius + thickness,
-      radius + thickness,
-      0,
-      largeArcFlagOuter,
-      1,
-      center.x + (radius + thickness) * Math.cos(endAngleOuter),
-      center.y + (radius + thickness) * Math.sin(endAngleOuter)
-    ].join(' ');
-
+  const outlines = () => {
     return (
-      <g key={start}>
-        <path d={d} fill="none" stroke="black" strokeWidth={strokeThickness} />
-        <path d={dOuter} fill="none" stroke="black" strokeWidth={strokeThickness} />
+      <g key="outlines">
+        <circle cx={center.x} cy={center.y} r={radius + thickness} fill="none" stroke="black" strokeWidth={strokeThickness} />
+        <circle cx={center.x} cy={center.y} r={radius - thickness} fill="none" stroke="black" strokeWidth={strokeThickness} />
       </g>
     )
-  };
-
-  // Draw the arcs connecting the knobs
-  const arcElements = knobPositions.map((pos, index) => {
-    const nextIndex = (index + 1) % knobs;
-    const nextPos = knobPositions[nextIndex];
-    return arc(pos.angle, nextPos.angle);
-  });
+  }
 
   // Draw the knobs and hex values
   const knobElements = knobPositions.map((pos, index) => {
-    const color = hslToHex(pos.angle, 100, 50);
+    //const color = hslToHex(pos.angle, 100, 50);
 
     return (
       <g key={index}>
-        <text
+        {/* <text
           x={center.x + (radius - thickness * 2) * Math.cos(degToRad(pos.angle))}
           y={center.y + (radius - thickness * 2) * Math.sin(degToRad(pos.angle))}
           fontSize={10 * size}
@@ -362,7 +319,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
           textAnchor="middle"
         >
           {Math.round(pos.angle)}
-        </text>
+        </text> */}
 
         <line
           x1={center.x + (radius - thickness) * Math.cos(degToRad(pos.angle))}
@@ -371,13 +328,22 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
           y2={center.y + (radius + thickness) * Math.sin(degToRad(pos.angle))}
           stroke="black"
           strokeWidth={strokeThickness}
+        />
+
+        <circle
+          cx={center.x + radius* Math.cos(degToRad(pos.angle))}
+          cy={center.y + radius * Math.sin(degToRad(pos.angle))}
+          r={knobRadius}
+          fill="none"
+          stroke="none"
           onMouseDown={handleMouseDown(index)}
           onMouseEnter={handleMouseEnter(index)}
           onMouseLeave={handleMouseLeave(index)}
           onDoubleClick={handleKnobClick(index)}
+          pointerEvents={'bounding-box'}
         />
 
-        <circle
+        {/* <circle
           cx={center.x + (radius - thickness) * Math.cos(degToRad(pos.angle))}
           cy={center.y + (radius - thickness) * Math.sin(degToRad(pos.angle))}
           r={strokeThickness}
@@ -398,7 +364,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
           onMouseDown={handleMouseDown(index)}
           onMouseEnter={handleMouseEnter(index)}
           onMouseLeave={handleMouseLeave(index)}
-        />
+        /> */}
       </g>
     );
   });
@@ -407,9 +373,9 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
     <div className='CircularSlider'>
       <svg ref={svgRef} width={2 * (radius + knobRadius * 2) * 1.25} height={2 * (radius + knobRadius * 2) * 1.25}>
         {rainbowGradient}
+        {outlines()}
         {colorDisplay()}
         {textElements}
-        {arcElements}
         {knobElements}
       </svg>
       {knobInfo.some((info) => info) && (
