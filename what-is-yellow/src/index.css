@@ -5,9 +5,49 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.container {
+  background: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* The scrolling grid */
+.grid {
+  width: 200%;
+  height: 200%;
+  background-size: 50px 50px;
+  background-image: linear-gradient(to right, #cccccc 1px, transparent 1px),
+                    linear-gradient(to bottom, #cccccc 1px, transparent 1px);
+  animation: scrollGrid 10s linear infinite;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Keyframes for the scrolling animation */
+@keyframes scrollGrid {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(-50%, -50%);
+  }
+}
+
+.slider {
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
+  backdrop-filter: blur(3px);
 }

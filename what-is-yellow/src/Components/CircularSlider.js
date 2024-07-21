@@ -1,4 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
+import InfoBox from './InfoBox';
+import './CircularSlider.css';
 
 // Utility function to convert degrees to radians
 const degToRad = (deg) => (deg * Math.PI) / 180;
@@ -33,37 +35,20 @@ const clampBetween = (angle, min, max, minDist = 10) => {
   const flippedMidPoint = (midPoint + 180) % 360; // Calculate the opposite side of the midpoint
 
   const dist = (x, y) => (y - x + 360) % 360; // Calculate distance between two angles  <== makoto
+ const betweenLowAndFMid = currentPos < lowerBound && currentPos > flippedMidPoint
+ const betweenHighAndFMid = currentPos > upperBound && currentPos < flippedMidPoint
 
-  
-  if ( midPoint == 0) {
-    if (currentPos < lowerBound && currentPos > flippedMidPoint) return lowerBound; //left of mid
-    if (currentPos > upperBound && currentPos < flippedMidPoint) return upperBound; //right of mid
-    return currentPos;
-  } else if (flippedMidPoint == 0) {
-    if (currentPos > upperBound && currentPos < 360) return upperBound; //right of mid
-    if (currentPos < lowerBound && currentPos > 0) return lowerBound; //left of mid
-    return currentPos;
-  } else if (midPoint > flippedMidPoint) { // 0 line is to the right
-    if (currentPos < lowerBound && currentPos > flippedMidPoint) return lowerBound; //left of mid
+  if (midPoint > flippedMidPoint) { // 0 line is to the right
+    if (betweenLowAndFMid) return lowerBound; //left of mid
     if (!maxxedUp && ((currentPos > upperBound && currentPos < 361) || (currentPos > -1 && currentPos < flippedMidPoint))) return upperBound; //right of mid, max isnt past 0 line, accounting for max -> 360 / 0 -> fmp
-    if (maxxedUp && currentPos > upperBound && currentPos < flippedMidPoint) return upperBound; //rightt of mid, max past 0 line
+    if (maxxedUp && betweenHighAndFMid) return upperBound; //rightt of mid, max past 0 line
     return currentPos;
   } else if (midPoint < flippedMidPoint) { // 0 line is to the left
-    if (currentPos > upperBound && currentPos < flippedMidPoint) return upperBound; //right of mid
+    if (betweenHighAndFMid) return upperBound; //right of mid
     if (!maxxedUp && ((currentPos < lowerBound && currentPos > -1) || (currentPos < 361 && currentPos > flippedMidPoint))) return lowerBound; //left of mid, min isnt past 0 line, accounting for min -> 360 / 0 -> fmp
-    if (maxxedUp && currentPos < lowerBound && currentPos > flippedMidPoint) return lowerBound; //left of mid, max past 0 line
+    if (maxxedUp && betweenLowAndFMid) return lowerBound; //left of mid, max past 0 line
     return currentPos;
   }
-
-  // if (lowerBound <= upperBound) {
-  //   if (currentPos <lowerBound+ minDistClamped) return lowerBound+ minDistClamped;
-  //   if (currentPos >upperBound- minDistClamped) return upperBound- minDistClamped;
-  // } else {
-  //   if (currentPos >upperBound&& currentPos <lowerBound+ minDistClamped) return lowerBound+ minDistClamped;
-  //   if (currentPos >upperBound- minDistClamped && currentPos < lowerBound) return upperBound- minDistClamped;
-  //   if (currentPos <lowerBound&& currentPos > upperBound) return currentPos -lowerBound<upperBound- currentPos ?lowerBound+ minDistClamped :upperBound- minDistClamped;
-  // }
-  // return currentPos;
 };
 
 // Calculate the average hue of a segment
@@ -84,7 +69,12 @@ const hslToHex = (h, s, l) => {
   return `#${f(0).toString(16).padStart(2, '0')}${f(8).toString(16).padStart(2, '0')}${f(4).toString(16).padStart(2, '0')}`;
 };
 
-const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) => {
+const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 10, strokeThickness = 3, size = 3, onChange }) => {
+  radius *= size;
+  knobRadius *= size;
+  thickness *= size;
+  strokeThickness *= size;
+
   const [angles, setAngles] = useState(Array(knobs).fill(0));
   const [activeIndex, setActiveIndex] = useState(null);
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -92,6 +82,11 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
   const [center, setCenter] = useState({ x: radius + knobRadius, y: radius + knobRadius });
   const [svgRect, setSvgRect] = useState(null);
   const svgRef = useRef(null);
+
+  // State for managing the info box
+  const [knobInfo, setKnobInfo] = useState(Array(knobs).fill(false));
+  const [infoBoxContent, setInfoBoxContent] = useState("");
+  const [infoBoxPosition, setInfoBoxPosition] = useState({ x: 0, y: 0 });
 
   // Calculate the angles for each knob based on even spacing
   useEffect(() => {
@@ -109,6 +104,32 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
       setCenter({ x: rect.width / 2, y: rect.height / 2 });
     }
   }, [radius, knobRadius]);
+
+  // Event handler for clicking knobs
+  // -> displays additional information about the color in a popup
+  const handleKnobClick = (index) => (e) => {
+    const color = hslToHex(angles[index], 100, 50);
+    const knobPosition = knobPositions[index];
+
+    if (knobInfo[index]) {
+      setKnobInfo((prevInfo) => {
+        const newInfo = [...prevInfo];
+        newInfo[index] = false;
+        setInfoBoxContent(`Info for knob ${index + 1}: ${color}`);
+        setInfoBoxPosition({ x: knobPosition.x + 20, y: knobPosition.y });
+        return newInfo;
+      });
+    } 
+    else {
+      setKnobInfo((prevInfo) => {
+        const newInfo = [...prevInfo];
+        newInfo[index] = true;
+        setInfoBoxContent(`Info for knob ${index + 1}: ${color}`);
+        setInfoBoxPosition({ x: knobPosition.x + 20, y: knobPosition.y });
+        return newInfo;
+      });
+    }
+  };
 
   // Event handlers for dragging knobs
   const handleMouseDown = (index) => (e) => {
@@ -140,6 +161,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
 
     const onMouseUp = () => {
       setActiveIndex(null);
+      
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
     };
@@ -150,12 +172,20 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
 
   // Event handlers for hovering knobs
   const handleMouseEnter = (index) => () => {
+    // increase the size of the svg circle of the specified index
+    const outerCircle = document.getElementById(`outerCircle${index}`);
+    outerCircle.setAttribute('r', strokeThickness * 2.5);
+
     if (hoveredIndex === null) {
       setHoveredIndex(index);
     }
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (index) => () => {
+    // decrease the size of the svg circle of the specified index
+    const outerCircle = document.getElementById(`outerCircle${index}`);
+    outerCircle.setAttribute('r', strokeThickness);
+
     setHoveredIndex(null);
   };
 
@@ -192,6 +222,8 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
     }
   }, [hoveredIndex]);
 
+  
+
   // Calculate the knob positions based on the angles
   const knobPositions = angles.map((angle) => ({
     x: center.x + (radius + knobRadius * 1.5) * Math.cos(degToRad(angle)),
@@ -206,12 +238,12 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
     return (
       <line
         key={i}
-        x1={center.x + (radius - knobRadius) * Math.cos(degToRad(angle))}
-        y1={center.y + (radius - knobRadius) * Math.sin(degToRad(angle))}
-        x2={center.x + (radius + knobRadius) * Math.cos(degToRad(angle))}
-        y2={center.y + (radius + knobRadius) * Math.sin(degToRad(angle))}
+        x1={center.x + (radius - thickness) * Math.cos(degToRad(angle))}
+        y1={center.y + (radius - thickness) * Math.sin(degToRad(angle))}
+        x2={center.x + (radius + thickness) * Math.cos(degToRad(angle))}
+        y2={center.y + (radius + thickness) * Math.sin(degToRad(angle))}
         stroke={color}
-        strokeWidth="2"
+        strokeWidth="5"
       />
     );
   });
@@ -248,7 +280,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
         key={index}
         x={textPos.x}
         y={textPos.y}
-        fontSize="10"
+        fontSize={10 * size}
         fill={color}
         style={{ userSelect: 'none' }}
         textAnchor="middle"
@@ -258,17 +290,69 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
     );
   });
 
+  // draw an arc connecting the two knobs
+  const arc = (start, end) => {
+    // inner arc
+    const startAngle = degToRad(start);
+    const endAngle = degToRad(end);
+    const largeArcFlag = end - start <= 180 ? '0' : '1';
+    const d = [
+      'M',
+      center.x + (radius - thickness) * Math.cos(startAngle),
+      center.y + (radius - thickness) * Math.sin(startAngle),
+      'A',
+      radius - thickness,
+      radius - thickness,
+      0,
+      largeArcFlag,
+      1,
+      center.x + (radius - thickness) * Math.cos(endAngle),
+      center.y + (radius - thickness) * Math.sin(endAngle)
+    ].join(' ');
+
+    // outer arc
+    const startAngleOuter = degToRad(start);
+    const endAngleOuter = degToRad(end);
+    const largeArcFlagOuter = end - start <= 180 ? '0' : '1';
+    const dOuter = [
+      'M',
+      center.x + (radius + thickness) * Math.cos(startAngleOuter),
+      center.y + (radius + thickness) * Math.sin(startAngleOuter),
+      'A',
+      radius + thickness,
+      radius + thickness,
+      0,
+      largeArcFlagOuter,
+      1,
+      center.x + (radius + thickness) * Math.cos(endAngleOuter),
+      center.y + (radius + thickness) * Math.sin(endAngleOuter)
+    ].join(' ');
+
+    return (
+      <g key={start}>
+        <path d={d} fill="none" stroke="black" strokeWidth={strokeThickness} />
+        <path d={dOuter} fill="none" stroke="black" strokeWidth={strokeThickness} />
+      </g>
+    )
+  };
+
+  // Draw the arcs connecting the knobs
+  const arcElements = knobPositions.map((pos, index) => {
+    const nextIndex = (index + 1) % knobs;
+    const nextPos = knobPositions[nextIndex];
+    return arc(pos.angle, nextPos.angle);
+  });
+
   // Draw the knobs and hex values
   const knobElements = knobPositions.map((pos, index) => {
     const color = hslToHex(pos.angle, 100, 50);
 
-    const trianglePoints = `${center.x + 100 * Math.cos(degToRad(pos.angle))},${center.y + 100 * Math.sin(degToRad(pos.angle))} ${center.x + 110 * Math.cos(degToRad(pos.angle + 2))},${center.y + 110 * Math.sin(degToRad(pos.angle + 2))} ${center.x + 110 * Math.cos(degToRad(pos.angle - 2))},${center.y + 110 * Math.sin(degToRad(pos.angle - 2))}`;
     return (
       <g key={index}>
         <text
-          x={pos.x + 20 * Math.cos(degToRad(pos.angle))}
-          y={pos.y + 20 * Math.sin(degToRad(pos.angle))}
-          fontSize="10"
+          x={center.x + (radius - thickness * 2) * Math.cos(degToRad(pos.angle))}
+          y={center.y + (radius - thickness * 2) * Math.sin(degToRad(pos.angle))}
+          fontSize={10 * size}
           fill="black"
           style={{ userSelect: 'none' }}
           textAnchor="middle"
@@ -276,9 +360,9 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
           {color}
         </text>
         <text
-          x={pos.x - 50 * Math.cos(degToRad(pos.angle))}
-          y={pos.y - 50 * Math.sin(degToRad(pos.angle))}
-          fontSize="10"
+          x={center.x + (radius + thickness * 2) * Math.cos(degToRad(pos.angle))}
+          y={center.y + (radius + thickness * 2) * Math.sin(degToRad(pos.angle))}
+          fontSize={10 * size}
           fill="black"
           style={{ userSelect: 'none' }}
           textAnchor="middle"
@@ -286,38 +370,58 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
           {Math.round(pos.angle)}
         </text>
 
-        <circle
-          cx={pos.x}
-          cy={pos.y}
-          r={knobRadius}
-          fill="black"
-          stroke={activeIndex === index || hoveredIndex === index ? 'black' : 'none'}
-          strokeWidth={2}
+        <line
+          x1={center.x + (radius - thickness) * Math.cos(degToRad(pos.angle))}
+          y1={center.y + (radius - thickness) * Math.sin(degToRad(pos.angle))}
+          x2={center.x + (radius + thickness) * Math.cos(degToRad(pos.angle))}
+          y2={center.y + (radius + thickness) * Math.sin(degToRad(pos.angle))}
+          stroke="black"
+          strokeWidth={strokeThickness}
           onMouseDown={handleMouseDown(index)}
           onMouseEnter={handleMouseEnter(index)}
-          onMouseLeave={handleMouseLeave}
+          onMouseLeave={handleMouseLeave(index)}
+          onDoubleClick={handleKnobClick(index)}
         />
 
-        <polygon
-          points={trianglePoints}
+        <circle
+          cx={center.x + (radius - thickness) * Math.cos(degToRad(pos.angle))}
+          cy={center.y + (radius - thickness) * Math.sin(degToRad(pos.angle))}
+          r={strokeThickness}
           fill="black"
-          stroke={activeIndex === index || hoveredIndex === index ? 'black' : 'none'}
-          strokeWidth={2}
+          strokeWidth={strokeThickness}
           onMouseDown={handleMouseDown(index)}
           onMouseEnter={handleMouseEnter(index)}
-          onMouseLeave={handleMouseLeave}
+          onMouseLeave={handleMouseLeave(index)}
+        />
+
+        <circle
+          id={"outerCircle" + index}
+          cx={center.x + (radius + thickness) * Math.cos(degToRad(pos.angle))}
+          cy={center.y + (radius + thickness) * Math.sin(degToRad(pos.angle))}
+          r={strokeThickness}
+          fill="black"
+          strokeWidth={strokeThickness}
+          onMouseDown={handleMouseDown(index)}
+          onMouseEnter={handleMouseEnter(index)}
+          onMouseLeave={handleMouseLeave(index)}
         />
       </g>
     );
   });
 
   return (
-    <svg ref={svgRef} width={2 * (radius + knobRadius * 2) * 1.25} height={2 * (radius + knobRadius * 2) * 1.25}>
-      {rainbowGradient}
-      {knobElements}
-      {colorDisplay()}
-      {textElements}
-    </svg>
+    <div className='CircularSlider'>
+      <svg ref={svgRef} width={2 * (radius + knobRadius * 2) * 1.25} height={2 * (radius + knobRadius * 2) * 1.25}>
+        {rainbowGradient}
+        {colorDisplay()}
+        {textElements}
+        {arcElements}
+        {knobElements}
+      </svg>
+      {knobInfo.some((info) => info) && (
+        <InfoBox content={infoBoxContent} position={infoBoxPosition} />
+      )}
+    </div>
   );
 };
 
