@@ -251,6 +251,16 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
         >
           {color}
         </text>
+        <text
+          x={pos.x - 50 * Math.cos(degToRad(pos.angle))}
+          y={pos.y - 50 * Math.sin(degToRad(pos.angle))}
+          fontSize="10"
+          fill="black"
+          style={{ userSelect: 'none' }}
+          textAnchor="middle"
+        >
+          {Math.round(pos.angle)}
+        </text>
 
         <circle
           cx={pos.x}
