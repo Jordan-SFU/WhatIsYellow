@@ -2,74 +2,76 @@ import React, { useRef, useState, useEffect } from 'react';
 import InfoBox from './InfoBox';
 import './CircularSlider.css';
 
-// Utility function to convert degrees to radians
-const degToRad = (deg) => (deg * Math.PI) / 180;
 
-// Utility function to convert radians to degrees
-const radToDeg = (rad) => (rad * 180) / Math.PI;
 
-// Calculate the angle from the center of the circle to the mouse pointer
-const getAngle = (cx, cy, x, y) => {
-  const dx = x - cx;
-  const dy = y - cy;
-  const angle = radToDeg(Math.atan2(dy, dx));
-  return angle >= 0 ? angle : angle + 360;
-};
+const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 10, strokeThickness = 3, size = 3, centerScale = 1, textValues = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple"], minimumDistance = 10, onChange }) => {
+    // Utility function to convert degrees to radians
+  const degToRad = (deg) => (deg * Math.PI) / 180;
 
-// Clamp an angle to be within 0-360 degrees
-const clampAngle = (angle) => (angle + 360) % 360;
+  // Utility function to convert radians to degrees
+  const radToDeg = (rad) => (rad * 180) / Math.PI;
 
-// Function to clamp an angle between two other angles with a minimum distance constraint
-const clampBetween = (angle, min, max, minDist = 10) => {
-  const clampAngle = (ang) => (ang % 360 + 360) % 360; // Ensure angles are between 0 and 359
-  const minDistClamped = Math.min(minDist, 360); // Ensure minDist is within valid range
-  const currentPos = clampAngle(angle);
-  const lowerBound = clampAngle(min + minDistClamped); // Calculate the lower bound of the segment
-  const upperBound = clampAngle(max - minDistClamped); // Calculate the upper bound of the segment
-  //TODO edge case when theyre less than mindist away from 0 line
-  var maxxedUp = false;
-  if (lowerBound > upperBound) { // if ma is past 0 line
-   maxxedUp = true; // set flag
-  }
-  const midPoint = (lowerBound + (maxxedUp ? upperBound + 360 : upperBound)) / 2; // Calculate the midpoint of the segment
-  const flippedMidPoint = (midPoint + 180) % 360; // Calculate the opposite side of the midpoint
+  // Calculate the angle from the center of the circle to the mouse pointer
+  const getAngle = (cx, cy, x, y) => {
+    const dx = x - cx;
+    const dy = y - cy;
+    const angle = radToDeg(Math.atan2(dy, dx));
+    return angle >= 0 ? angle : angle + 360;
+  };
 
-  const dist = (x, y) => (y - x + 360) % 360; // Calculate distance between two angles  <== makoto
- const betweenLowAndFMid = currentPos < lowerBound && currentPos > flippedMidPoint
- const betweenHighAndFMid = currentPos > upperBound && currentPos < flippedMidPoint
+  // Clamp an angle to be within 0-360 degrees
+  const clampAngle = (angle) => (angle + 360) % 360;
 
-  if (midPoint > flippedMidPoint) { // 0 line is to the right
-    if (betweenLowAndFMid) return lowerBound; //left of mid
-    if (!maxxedUp && ((currentPos > upperBound && currentPos < 361) || (currentPos > -1 && currentPos < flippedMidPoint))) return upperBound; //right of mid, max isnt past 0 line, accounting for max -> 360 / 0 -> fmp
-    if (maxxedUp && betweenHighAndFMid) return upperBound; //rightt of mid, max past 0 line
-    return currentPos;
-  } else if (midPoint < flippedMidPoint) { // 0 line is to the left
-    if (betweenHighAndFMid) return upperBound; //right of mid
-    if (!maxxedUp && ((currentPos < lowerBound && currentPos > -1) || (currentPos < 361 && currentPos > flippedMidPoint))) return lowerBound; //left of mid, min isnt past 0 line, accounting for min -> 360 / 0 -> fmp
-    if (maxxedUp && betweenLowAndFMid) return lowerBound; //left of mid, max past 0 line
-    return currentPos;
-  }
-};
+  // Function to clamp an angle between two other angles with a minimum distance constraint
+  const clampBetween = (angle, min, max, minDist = minimumDistance) => {
+    const clampAngle = (ang) => (ang % 360 + 360) % 360; // Ensure angles are between 0 and 359
+    const minDistClamped = Math.min(minDist, 360); // Ensure minDist is within valid range
+    const currentPos = clampAngle(angle);
+    const lowerBound = clampAngle(min + minDistClamped); // Calculate the lower bound of the segment
+    const upperBound = clampAngle(max - minDistClamped); // Calculate the upper bound of the segment
+    //TODO edge case when theyre less than mindist away from 0 line
+    var maxxedUp = false;
+    if (lowerBound > upperBound) { // if ma is past 0 line
+    maxxedUp = true; // set flag
+    }
+    const midPoint = (lowerBound + (maxxedUp ? upperBound + 360 : upperBound)) / 2; // Calculate the midpoint of the segment
+    const flippedMidPoint = (midPoint + 180) % 360; // Calculate the opposite side of the midpoint
 
-// Calculate the average hue of a segment
-const averageHue = (start, end) => {
-  const diff = end - start;
-  const hue = start + diff / 2;
-  return hue % 360;
-};
+    const dist = (x, y) => (y - x + 360) % 360; // Calculate distance between two angles  <== makoto
+  const betweenLowAndFMid = currentPos < lowerBound && currentPos > flippedMidPoint
+  const betweenHighAndFMid = currentPos > upperBound && currentPos < flippedMidPoint
 
-// Utility function to convert HSL to Hex
-const hslToHex = (h, s, l) => {
-  s /= 100;
-  l /= 100;
-  const k = (n) => (n + h / 30) % 12;
-  const a = s * Math.min(l, 1 - l);
-  const f = (n) =>
-    Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))));
-  return `#${f(0).toString(16).padStart(2, '0')}${f(8).toString(16).padStart(2, '0')}${f(4).toString(16).padStart(2, '0')}`;
-};
+    if (midPoint > flippedMidPoint) { // 0 line is to the right
+      if (betweenLowAndFMid) return lowerBound; //left of mid
+      if (!maxxedUp && ((currentPos > upperBound && currentPos < 361) || (currentPos > -1 && currentPos < flippedMidPoint))) return upperBound; //right of mid, max isnt past 0 line, accounting for max -> 360 / 0 -> fmp
+      if (maxxedUp && betweenHighAndFMid) return upperBound; //rightt of mid, max past 0 line
+      return currentPos;
+    } else if (midPoint < flippedMidPoint) { // 0 line is to the left
+      if (betweenHighAndFMid) return upperBound; //right of mid
+      if (!maxxedUp && ((currentPos < lowerBound && currentPos > -1) || (currentPos < 361 && currentPos > flippedMidPoint))) return lowerBound; //left of mid, min isnt past 0 line, accounting for min -> 360 / 0 -> fmp
+      if (maxxedUp && betweenLowAndFMid) return lowerBound; //left of mid, max past 0 line
+      return currentPos;
+    }
+  };
 
-const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 10, strokeThickness = 3, size = 3, onChange }) => {
+  // Calculate the average hue of a segment
+  const averageHue = (start, end) => {
+    const diff = end - start;
+    const hue = start + diff / 2;
+    return hue % 360;
+  };
+
+  // Utility function to convert HSL to Hex
+  const hslToHex = (h, s, l) => {
+    s /= 100;
+    l /= 100;
+    const k = (n) => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n) =>
+      Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))));
+    return `#${f(0).toString(16).padStart(2, '0')}${f(8).toString(16).padStart(2, '0')}${f(4).toString(16).padStart(2, '0')}`;
+  };
+  
   radius *= size;
   knobRadius *= size;
   thickness *= size;
@@ -172,20 +174,12 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
 
   // Event handlers for hovering knobs
   const handleMouseEnter = (index) => () => {
-    // increase the size of the svg circle of the specified index
-    const outerCircle = document.getElementById(`outerCircle${index}`);
-    outerCircle.setAttribute('r', strokeThickness * 2.5);
-
     if (hoveredIndex === null) {
       setHoveredIndex(index);
     }
   };
 
   const handleMouseLeave = (index) => () => {
-    // decrease the size of the svg circle of the specified index
-    const outerCircle = document.getElementById(`outerCircle${index}`);
-    outerCircle.setAttribute('r', strokeThickness);
-
     setHoveredIndex(null);
   };
 
@@ -252,7 +246,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
   const colorDisplay = () => {
     const color = lastSelectedColor || '#000000';
     return (
-      <circle cx={center.x} cy={center.y} r={knobRadius * 5} fill={color} />
+      <circle cx={center.x} cy={center.y} r={knobRadius * 5 * centerScale} fill={color} />
     );
   };
 
@@ -285,7 +279,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
         style={{ userSelect: 'none' }}
         textAnchor="middle"
       >
-        {index === 0 ? 'Orange' : index === 1 ? 'Yellow' : index === 2 ? 'Green' : index === 3 ? 'Blue' : index === 4 ? 'Purple' : 'Red'}
+        {textValues[(index + 1) % knobs]}
       </text>
     );
   });
