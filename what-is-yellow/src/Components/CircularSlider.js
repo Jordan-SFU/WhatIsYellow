@@ -168,7 +168,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
   const knobPositions = angles.map((angle) => ({
     x: center.x + (radius + knobRadius * 1.5) * Math.cos(degToRad(angle)),
     y: center.y + (radius + knobRadius * 1.5) * Math.sin(degToRad(angle)),
-    angle: angle
+    angle: clampAngle(angle)
   }));
 
   // Create the rainbow gradient with increased resolution
@@ -192,19 +192,19 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
   const outlines = knobPositions.map((pos, index) => {
     const nextIndex = (index + 1) % knobs;
     const nextPos = knobPositions[nextIndex];
-
+    let temp = pos.angle;
     if (nextPos.angle < pos.angle) {
-      pos.angle = pos.angle - 360;
+      temp = pos.angle - 360;
     }
 
-    const avgHue = averageHue(pos.angle, nextPos.angle);
+    const avgHue = averageHue(temp, nextPos.angle);
     const color = `hsl(${avgHue}, 100%, 50%)`;
     return (
       <g key={index}>
         <path
-          d={`M ${center.x + (radius - knobRadius) * Math.cos(degToRad(pos.angle))}
-              ${center.y + (radius - knobRadius) * Math.sin(degToRad(pos.angle))}
-              A ${radius - knobRadius} ${radius - knobRadius} 0 ${Math.abs(nextPos.angle - pos.angle) > 180 ? 1 : 0} 1
+          d={`M ${center.x + (radius - knobRadius) * Math.cos(degToRad(temp))}
+              ${center.y + (radius - knobRadius) * Math.sin(degToRad(temp))}
+              A ${radius - knobRadius} ${radius - knobRadius} 0 ${Math.abs(nextPos.angle - temp) > 180 ? 1 : 0} 1
               ${center.x + (radius - knobRadius) * Math.cos(degToRad(nextPos.angle))}
               ${center.y + (radius - knobRadius) * Math.sin(degToRad(nextPos.angle))}`}
           fill="none"
@@ -212,9 +212,9 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
           strokeWidth="2"
         />
         <path
-          d={`M ${center.x + (radius + knobRadius) * Math.cos(degToRad(pos.angle))}
-              ${center.y + (radius + knobRadius) * Math.sin(degToRad(pos.angle))}
-              A ${radius + knobRadius} ${radius + knobRadius} 0 ${Math.abs(nextPos.angle - pos.angle) > 180 ? 1 : 0} 1
+          d={`M ${center.x + (radius + knobRadius) * Math.cos(degToRad(temp))}
+              ${center.y + (radius + knobRadius) * Math.sin(degToRad(temp))}
+              A ${radius + knobRadius} ${radius + knobRadius} 0 ${Math.abs(nextPos.angle - temp) > 180 ? 1 : 0} 1
               ${center.x + (radius + knobRadius) * Math.cos(degToRad(nextPos.angle))}
               ${center.y + (radius + knobRadius) * Math.sin(degToRad(nextPos.angle))}`}
           fill="none"
