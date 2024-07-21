@@ -188,43 +188,6 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
     );
   });
 
-  // Draw the outlines of each segment
-  const outlines = knobPositions.map((pos, index) => {
-    const nextIndex = (index + 1) % knobs;
-    const nextPos = knobPositions[nextIndex];
-    let temp = pos.angle;
-    if (nextPos.angle < pos.angle) {
-      temp = pos.angle - 360;
-    }
-
-    const avgHue = averageHue(temp, nextPos.angle);
-    const color = `hsl(${avgHue}, 100%, 50%)`;
-    return (
-      <g key={index}>
-        <path
-          d={`M ${center.x + (radius - knobRadius) * Math.cos(degToRad(temp))}
-              ${center.y + (radius - knobRadius) * Math.sin(degToRad(temp))}
-              A ${radius - knobRadius} ${radius - knobRadius} 0 ${Math.abs(nextPos.angle - temp) > 180 ? 1 : 0} 1
-              ${center.x + (radius - knobRadius) * Math.cos(degToRad(nextPos.angle))}
-              ${center.y + (radius - knobRadius) * Math.sin(degToRad(nextPos.angle))}`}
-          fill="none"
-          stroke={color}
-          strokeWidth="2"
-        />
-        <path
-          d={`M ${center.x + (radius + knobRadius) * Math.cos(degToRad(temp))}
-              ${center.y + (radius + knobRadius) * Math.sin(degToRad(temp))}
-              A ${radius + knobRadius} ${radius + knobRadius} 0 ${Math.abs(nextPos.angle - temp) > 180 ? 1 : 0} 1
-              ${center.x + (radius + knobRadius) * Math.cos(degToRad(nextPos.angle))}
-              ${center.y + (radius + knobRadius) * Math.sin(degToRad(nextPos.angle))}`}
-          fill="none"
-          stroke={color}
-          strokeWidth="2"
-        />
-      </g>
-    );
-  });
-
   // Draw the center circle displaying the last selected color
   const colorDisplay = () => {
     const color = lastSelectedColor || '#000000';
@@ -266,7 +229,6 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
       </text>
     );
   });
- 
 
   // Draw the knobs and hex values
   const knobElements = knobPositions.map((pos, index) => {
