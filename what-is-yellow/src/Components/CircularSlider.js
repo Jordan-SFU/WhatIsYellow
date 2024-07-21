@@ -19,24 +19,24 @@ const clampAngle = (angle) => (angle + 360) % 360;
 
 // Function to clamp an angle between two other angles with a minimum distance constraint
 const clampBetween = (angle, min, max, minDist = 10) => {
-    const clampAngle = (ang) => (ang % 360 + 360) % 360; // Ensure angles are between 0 and 359
-    const a = clampAngle(angle);
-    const mi = clampAngle(min);
-    const ma = clampAngle(max);
-    const dist = (x, y) => (y - x + 360) % 360; // Calculate distance between two angles
-    
-    const minDistClamped = Math.min(minDist, 360); // Ensure minDist is within valid range
-    
-    if (mi <= ma) {
-      if (a < mi + minDistClamped) return mi + minDistClamped;
-      if (a > ma - minDistClamped) return ma - minDistClamped;
-    } else {
-      if (a > ma && a < mi + minDistClamped) return mi + minDistClamped;
-      if (a > ma - minDistClamped && a < mi) return ma - minDistClamped;
-      if (a < mi && a > ma) return a - mi < ma - a ? mi + minDistClamped : ma - minDistClamped;
-    }
-    return a;
-  };
+  const clampAngle = (ang) => (ang % 360 + 360) % 360; // Ensure angles are between 0 and 359
+  const a = clampAngle(angle);
+  const mi = clampAngle(min);
+  const ma = clampAngle(max);
+  const dist = (x, y) => (y - x + 360) % 360; // Calculate distance between two angles
+  
+  const minDistClamped = Math.min(minDist, 360); // Ensure minDist is within valid range
+  
+  if (mi <= ma) {
+    if (a < mi + minDistClamped) return mi + minDistClamped;
+    if (a > ma - minDistClamped) return ma - minDistClamped;
+  } else {
+    if (a > ma && a < mi + minDistClamped) return mi + minDistClamped;
+    if (a > ma - minDistClamped && a < mi) return ma - minDistClamped;
+    if (a < mi && a > ma) return a - mi < ma - a ? mi + minDistClamped : ma - minDistClamped;
+  }
+  return a;
+};
 
 // Calculate the average hue of a segment
 const averageHue = (start, end) => {
@@ -56,11 +56,12 @@ const hslToHex = (h, s, l) => {
   return `#${f(0).toString(16).padStart(2, '0')}${f(8).toString(16).padStart(2, '0')}${f(4).toString(16).padStart(2, '0')}`;
 };
 
-const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6 }) => {
+const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) => {
   const [angles, setAngles] = useState(Array(knobs).fill(0));
   const [activeIndex, setActiveIndex] = useState(null);
+  const [center, setCenter] = useState({ x: radius + knobRadius, y: radius + knobRadius });
+  const [svgRect, setSvgRect] = useState(null);
   const svgRef = useRef(null);
-  const center = radius + knobRadius;
 
   // Calculate the angles for each knob based on even spacing
   useEffect(() => {
@@ -70,25 +71,38 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6 }) => {
     );
   }, [knobs]);
 
+  // Update the center and bounding rect when the size or padding changes
+  useEffect(() => {
+    if (svgRef.current) {
+      const rect = svgRef.current.getBoundingClientRect();
+      setSvgRect(rect);
+      setCenter({ x: rect.width / 2, y: rect.height / 2 });
+    }
+  }, [radius, knobRadius]);
+
   // Event handlers for dragging knobs
   const handleMouseDown = (index) => (e) => {
     e.stopPropagation();
     setActiveIndex(index);
     const onMouseMove = (moveEvent) => {
-      const rect = svgRef.current.getBoundingClientRect();
-      const x = moveEvent.clientX - rect.left - center;
-      const y = moveEvent.clientY - rect.top - center;
-      let angle = clampAngle(getAngle(0, 0, x, y));
-      if (knobs > 1) {
-        const prevIndex = (index - 1 + knobs) % knobs;
-        const nextIndex = (index + 1) % knobs;
-        angle = clampBetween(angle, angles[prevIndex], angles[nextIndex]);
+      if (svgRect) {
+        const x = moveEvent.clientX - svgRect.left - center.x;
+        const y = moveEvent.clientY - svgRect.top - center.y;
+        let angle = clampAngle(getAngle(0, 0, x, y));
+        if (knobs > 1) {
+          const prevIndex = (index - 1 + knobs) % knobs;
+          const nextIndex = (index + 1) % knobs;
+          angle = clampBetween(angle, angles[prevIndex], angles[nextIndex]);
+        }
+        setAngles((prevAngles) => {
+          const newAngles = [...prevAngles];
+          newAngles[index] = angle;
+          if (onChange) {
+            onChange(index, angle);
+          }
+          return newAngles;
+        });
       }
-      setAngles((prevAngles) => {
-        const newAngles = [...prevAngles];
-        newAngles[index] = angle;
-        return newAngles;
-      });
     };
 
     const onMouseUp = () => {
@@ -103,8 +117,8 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6 }) => {
 
   // Calculate the knob positions based on the angles
   const knobPositions = angles.map((angle) => ({
-    x: center + (radius + knobRadius * 1.5) * Math.cos(degToRad(angle)),
-    y: center + (radius + knobRadius * 1.5) * Math.sin(degToRad(angle)),
+    x: center.x + (radius + knobRadius * 1.5) * Math.cos(degToRad(angle)),
+    y: center.y + (radius + knobRadius * 1.5) * Math.sin(degToRad(angle)),
     angle: angle
   }));
 
@@ -115,10 +129,10 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6 }) => {
     return (
       <line
         key={i}
-        x1={center + (radius - knobRadius) * Math.cos(degToRad(angle))}
-        y1={center + (radius - knobRadius) * Math.sin(degToRad(angle))}
-        x2={center + (radius + knobRadius) * Math.cos(degToRad(angle))}
-        y2={center + (radius + knobRadius) * Math.sin(degToRad(angle))}
+        x1={center.x + (radius - knobRadius) * Math.cos(degToRad(angle))}
+        y1={center.y + (radius - knobRadius) * Math.sin(degToRad(angle))}
+        x2={center.x + (radius + knobRadius) * Math.cos(degToRad(angle))}
+        y2={center.y + (radius + knobRadius) * Math.sin(degToRad(angle))}
         stroke={color}
         strokeWidth={knobRadius * 2}
       />
@@ -130,8 +144,8 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6 }) => {
     const nextIndex = (index + 1) % knobs;
     const nextPos = knobPositions[nextIndex];
 
-    if(nextPos.angle < pos.angle) {
-        pos.angle = pos.angle - 360;
+    if (nextPos.angle < pos.angle) {
+      pos.angle = pos.angle - 360;
     }
 
     const avgHue = averageHue(pos.angle, nextPos.angle);
@@ -139,21 +153,21 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6 }) => {
     return (
       <g key={index}>
         <path
-          d={`M ${center + (radius - knobRadius) * Math.cos(degToRad(pos.angle))}
-              ${center + (radius - knobRadius) * Math.sin(degToRad(pos.angle))}
+          d={`M ${center.x + (radius - knobRadius) * Math.cos(degToRad(pos.angle))}
+              ${center.y + (radius - knobRadius) * Math.sin(degToRad(pos.angle))}
               A ${radius - knobRadius} ${radius - knobRadius} 0 ${Math.abs(nextPos.angle - pos.angle) > 180 ? 1 : 0} 1
-              ${center + (radius - knobRadius) * Math.cos(degToRad(nextPos.angle))}
-              ${center + (radius - knobRadius) * Math.sin(degToRad(nextPos.angle))}`}
+              ${center.x + (radius - knobRadius) * Math.cos(degToRad(nextPos.angle))}
+              ${center.y + (radius - knobRadius) * Math.sin(degToRad(nextPos.angle))}`}
           fill="none"
           stroke="black"
           strokeWidth="2"
         />
         <path
-          d={`M ${center + (radius + knobRadius) * Math.cos(degToRad(pos.angle))}
-              ${center + (radius + knobRadius) * Math.sin(degToRad(pos.angle))}
+          d={`M ${center.x + (radius + knobRadius) * Math.cos(degToRad(pos.angle))}
+              ${center.y + (radius + knobRadius) * Math.sin(degToRad(pos.angle))}
               A ${radius + knobRadius} ${radius + knobRadius} 0 ${Math.abs(nextPos.angle - pos.angle) > 180 ? 1 : 0} 1
-              ${center + (radius + knobRadius) * Math.cos(degToRad(nextPos.angle))}
-              ${center + (radius + knobRadius) * Math.sin(degToRad(nextPos.angle))}`}
+              ${center.x + (radius + knobRadius) * Math.cos(degToRad(nextPos.angle))}
+              ${center.y + (radius + knobRadius) * Math.sin(degToRad(nextPos.angle))}`}
           fill="none"
           stroke="black"
           strokeWidth="2"
@@ -174,8 +188,8 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6 }) => {
     }
 
     const midAngle = (startAngle + endAngle) / 2;
-    const midX = center + radius * 1.25 * Math.cos(degToRad(midAngle));
-    const midY = center + radius * 1.25 * Math.sin(degToRad(midAngle));
+    const midX = center.x + radius * 1.25 * Math.cos(degToRad(midAngle));
+    const midY = center.y + radius * 1.25 * Math.sin(degToRad(midAngle));
     const hueStart = Math.round(startAngle);
     const hueEnd = Math.round(endAngle % 360);
 
@@ -207,8 +221,8 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6 }) => {
     const color = getColorAtAngle(angle);
     const hex = hslToHex(hue, 100, 50);
 
-    const posX = center + (radius + knobRadius * 2.5) * Math.cos(degToRad(angle));
-    const posY = center + (radius + knobRadius * 2.5) * Math.sin(degToRad(angle));
+    const posX = center.x + (radius + knobRadius * 2.5) * Math.cos(degToRad(angle));
+    const posY = center.y + (radius + knobRadius * 2.5) * Math.sin(degToRad(angle));
 
     return (
       <g key={`info-${index}`}>
@@ -229,11 +243,11 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6 }) => {
   return (
     <svg
       ref={svgRef}
-      width={center * 2 + 50}
-      height={center * 2 + 50}
+      width={center.x * 2 + 100}
+      height={center.y * 2 + 100}
       style={{ userSelect: 'none', touchAction: 'none' }}
     >
-      <g transform={`translate(${25}, ${25})`}>
+      <g transform={`translate(${50}, ${50})`}>
         {rainbowGradient}
         {outlines}
         {hueText}
@@ -242,11 +256,11 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6 }) => {
             <path
               d={`
                 M ${pos.x} ${pos.y}
-                L ${center + (radius + knobRadius * 2) * Math.cos(degToRad(pos.angle + 5))}
-                  ${center + (radius + knobRadius * 2) * Math.sin(degToRad(pos.angle + 5))}
+                L ${center.x + (radius + knobRadius * 2) * Math.cos(degToRad(pos.angle + 5))}
+                  ${center.y + (radius + knobRadius * 2) * Math.sin(degToRad(pos.angle + 5))}
                 A ${knobRadius} ${knobRadius} 0 0 1
-                  ${center + (radius + knobRadius * 2) * Math.cos(degToRad(pos.angle - 5))}
-                  ${center + (radius + knobRadius * 2) * Math.sin(degToRad(pos.angle - 5))}
+                  ${center.x + (radius + knobRadius * 2) * Math.cos(degToRad(pos.angle - 5))}
+                  ${center.y + (radius + knobRadius * 2) * Math.sin(degToRad(pos.angle - 5))}
                 Z
               `}
               fill={getColorAtAngle(pos.angle)}
@@ -255,8 +269,8 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6 }) => {
               onMouseDown={handleMouseDown(index)}
             />
             <circle
-              cx={center + (radius + knobRadius * 2.5) * Math.cos(degToRad(pos.angle))}
-              cy={center + (radius + knobRadius * 2.5) * Math.sin(degToRad(pos.angle))}
+              cx={center.x + (radius + knobRadius * 2.5) * Math.cos(degToRad(pos.angle))}
+              cy={center.y + (radius + knobRadius * 2.5) * Math.sin(degToRad(pos.angle))}
               r={knobRadius / 2}
               fill={getColorAtAngle(pos.angle)}
               stroke="black"
