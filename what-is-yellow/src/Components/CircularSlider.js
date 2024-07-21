@@ -24,9 +24,9 @@ const clampBetween = (angle, min, max, minDist = 10) => {
   const mi = clampAngle(min);
   const ma = clampAngle(max);
   const dist = (x, y) => (y - x + 360) % 360; // Calculate distance between two angles
-  
+
   const minDistClamped = Math.min(minDist, 360); // Ensure minDist is within valid range
-  
+
   if (mi <= ma) {
     if (a < mi + minDistClamped) return mi + minDistClamped;
     if (a > ma - minDistClamped) return ma - minDistClamped;
@@ -59,6 +59,7 @@ const hslToHex = (h, s, l) => {
 const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) => {
   const [angles, setAngles] = useState(Array(knobs).fill(0));
   const [activeIndex, setActiveIndex] = useState(null);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
   const [center, setCenter] = useState({ x: radius + knobRadius, y: radius + knobRadius });
   const [svgRect, setSvgRect] = useState(null);
   const svgRef = useRef(null);
@@ -98,7 +99,8 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
           const newAngles = [...prevAngles];
           newAngles[index] = angle;
           if (onChange) {
-            onChange(index, angle);
+            // round to nearest integer
+            onChange(index, Math.round(angle));
           }
           return newAngles;
         });
@@ -114,6 +116,48 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   };
+
+  // Event handlers for hovering knobs
+  const handleMouseEnter = (index) => () => {
+    if (hoveredIndex === null) {
+      setHoveredIndex(index);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredIndex(null);
+  };
+
+  // Event handler for the scroll wheel
+  const handleWheel = (e) => {
+    if (hoveredIndex !== null) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 1 : -1;
+      setAngles((prevAngles) => {
+        const newAngles = [...prevAngles];
+        let newAngle = clampAngle(newAngles[hoveredIndex] + delta);
+        if (knobs > 1) {
+          const prevIndex = (hoveredIndex - 1 + knobs) % knobs;
+          const nextIndex = (hoveredIndex + 1) % knobs;
+          newAngle = clampBetween(newAngle, angles[prevIndex], angles[nextIndex]);
+        }
+        newAngles[hoveredIndex] = newAngle;
+        if (onChange) {
+          onChange(hoveredIndex, Math.round(newAngle));
+        }
+        return newAngles;
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (svgRef.current) {
+      svgRef.current.addEventListener('wheel', handleWheel);
+      return () => {
+        svgRef.current.removeEventListener('wheel', handleWheel);
+      };
+    }
+  }, [hoveredIndex]);
 
   // Calculate the knob positions based on the angles
   const knobPositions = angles.map((angle) => ({
@@ -159,7 +203,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
               ${center.x + (radius - knobRadius) * Math.cos(degToRad(nextPos.angle))}
               ${center.y + (radius - knobRadius) * Math.sin(degToRad(nextPos.angle))}`}
           fill="none"
-          stroke="black"
+          stroke={color}
           strokeWidth="2"
         />
         <path
@@ -169,118 +213,61 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
               ${center.x + (radius + knobRadius) * Math.cos(degToRad(nextPos.angle))}
               ${center.y + (radius + knobRadius) * Math.sin(degToRad(nextPos.angle))}`}
           fill="none"
-          stroke="black"
+          stroke={color}
           strokeWidth="2"
         />
       </g>
     );
   });
 
-  // Display hue values of the segment endpoints
-  const hueText = knobPositions.map((pos, index) => {
-    const nextIndex = (index + 1) % knobs;
-    let nextPos = knobPositions[nextIndex];
+  // Draw the knobs and hex values
+  const knobElements = knobPositions.map((pos, index) => {
+    const color = hslToHex(pos.angle, 100, 50);
 
-    let startAngle = clampAngle(pos.angle);
-    let endAngle = clampAngle(nextPos.angle);
-    if (endAngle < startAngle) {
-      endAngle += 360;
-    }
-
-    const midAngle = (startAngle + endAngle) / 2;
-    const midX = center.x + radius * 1.25 * Math.cos(degToRad(midAngle));
-    const midY = center.y + radius * 1.25 * Math.sin(degToRad(midAngle));
-    const hueStart = Math.round(startAngle);
-    const hueEnd = Math.round(endAngle % 360);
-
+    const trianglePoints = `${center.x + 100 * Math.cos(degToRad(pos.angle))},${center.y + 100 * Math.sin(degToRad(pos.angle))} ${center.x + 110 * Math.cos(degToRad(pos.angle + 2))},${center.y + 110 * Math.sin(degToRad(pos.angle + 2))} ${center.x + 110 * Math.cos(degToRad(pos.angle - 2))},${center.y + 110 * Math.sin(degToRad(pos.angle - 2))}`;
     return (
-      <text
-        key={index}
-        x={midX}
-        y={midY}
-        fill="black"
-        fontSize="12"
-        textAnchor="middle"
-        alignmentBaseline="middle"
-      >
-        {`(${hueStart}°, ${hueEnd}°)`}
-      </text>
+      <g key={index}>
+        <text
+          x={pos.x + 20 * Math.cos(degToRad(pos.angle))}
+          y={pos.y + 20 * Math.sin(degToRad(pos.angle))}
+          fontSize="10"
+          fill="black"
+          style={{ userSelect: 'none' }}
+          textAnchor="middle"
+        >
+          {color}
+        </text>
+
+        <circle
+          cx={pos.x}
+          cy={pos.y}
+          r={knobRadius}
+          fill="black"
+          stroke={activeIndex === index || hoveredIndex === index ? 'black' : 'none'}
+          strokeWidth={2}
+          onMouseDown={handleMouseDown(index)}
+          onMouseEnter={handleMouseEnter(index)}
+          onMouseLeave={handleMouseLeave}
+        />
+
+        <polygon
+          points={trianglePoints}
+          fill="black"
+          stroke={activeIndex === index || hoveredIndex === index ? 'black' : 'none'}
+          strokeWidth={2}
+          onMouseDown={handleMouseDown(index)}
+          onMouseEnter={handleMouseEnter(index)}
+          onMouseLeave={handleMouseLeave}
+        />
+      </g>
     );
   });
 
-  // Function to get the color at a specific angle
-  const getColorAtAngle = (angle) => {
-    const hue = Math.round(clampAngle(angle));
-    return `hsl(${hue}, 100%, 50%)`;
-  };
-
-  // Function to handle display of hue and hex code
-  const renderHueInfo = (index) => {
-    const angle = angles[index];
-    const hue = Math.round(angle);
-    const color = getColorAtAngle(angle);
-    const hex = hslToHex(hue, 100, 50);
-
-    const posX = center.x + (radius + knobRadius * 2.5) * Math.cos(degToRad(angle));
-    const posY = center.y + (radius + knobRadius * 2.5) * Math.sin(degToRad(angle));
-
-    return (
-      <g key={`info-${index}`}>
-        <rect
-          x={posX - 40}
-          y={posY - 30}
-          width={80}
-          height={40}
-          fill="white"
-          stroke="black"
-        />
-        <text x={posX} y={posY - 15} fill="black" fontSize="12" textAnchor="middle">{`Hue: ${hue}°`}</text>
-        <text x={posX} y={posY} fill="black" fontSize="12" textAnchor="middle">{`Hex: ${hex}`}</text>
-      </g>
-    );
-  };
-
   return (
-    <svg
-      ref={svgRef}
-      width={center.x * 2 + 100}
-      height={center.y * 2 + 100}
-      style={{ userSelect: 'none', touchAction: 'none' }}
-    >
-      <g transform={`translate(${50}, ${50})`}>
-        {rainbowGradient}
-        {outlines}
-        {hueText}
-        {knobPositions.map((pos, index) => (
-          <g key={index}>
-            <path
-              d={`
-                M ${pos.x} ${pos.y}
-                L ${center.x + (radius + knobRadius * 2) * Math.cos(degToRad(pos.angle + 5))}
-                  ${center.y + (radius + knobRadius * 2) * Math.sin(degToRad(pos.angle + 5))}
-                A ${knobRadius} ${knobRadius} 0 0 1
-                  ${center.x + (radius + knobRadius * 2) * Math.cos(degToRad(pos.angle - 5))}
-                  ${center.y + (radius + knobRadius * 2) * Math.sin(degToRad(pos.angle - 5))}
-                Z
-              `}
-              fill={getColorAtAngle(pos.angle)}
-              stroke="black"
-              strokeWidth={2}
-              onMouseDown={handleMouseDown(index)}
-            />
-            <circle
-              cx={center.x + (radius + knobRadius * 2.5) * Math.cos(degToRad(pos.angle))}
-              cy={center.y + (radius + knobRadius * 2.5) * Math.sin(degToRad(pos.angle))}
-              r={knobRadius / 2}
-              fill={getColorAtAngle(pos.angle)}
-              stroke="black"
-              strokeWidth={2}
-              onMouseDown={handleMouseDown(index)}
-            />
-            {activeIndex === index && renderHueInfo(index)}
-          </g>
-        ))}
-      </g>
+    <svg ref={svgRef} width={2 * (radius + knobRadius * 2) * 1.25} height={2 * (radius + knobRadius * 2) * 1.25}>
+      {rainbowGradient}
+      {outlines}
+      {knobElements}
     </svg>
   );
 };
