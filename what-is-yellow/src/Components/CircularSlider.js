@@ -173,7 +173,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
 
   // Create the rainbow gradient with increased resolution
   const rainbowGradient = Array.from({ length: 720 }, (_, i) => {
-    const color = `hsl(${i / 2}, 100%, 50%)`;
+    const color = `hsl(${Math.round(i / 2)}, 100%, 50%)`;
     const angle = i / 2;
     return (
       <line
@@ -183,7 +183,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
         x2={center.x + (radius + knobRadius) * Math.cos(degToRad(angle))}
         y2={center.y + (radius + knobRadius) * Math.sin(degToRad(angle))}
         stroke={color}
-        strokeWidth={knobRadius * 2}
+        strokeWidth="2"
       />
     );
   });
@@ -232,6 +232,40 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
       <circle cx={center.x} cy={center.y} r={knobRadius * 5} fill={color} />
     );
   };
+
+  // Write text at the midpoint of each segment
+  const textElements = knobPositions.map((pos, index) => {
+    const nextIndex = (index + 1) % knobs;
+    const nextPos = knobPositions[nextIndex];
+
+    // special case for the last segment
+    let temp = pos.angle;
+    if (nextPos.angle < pos.angle) {
+      temp = pos.angle - 360;
+    }
+
+    const avgHue = averageHue(temp, nextPos.angle);
+    const color = `hsl(${avgHue}, 100%, 50%)`;
+    const textAngle = averageHue(temp, nextPos.angle);
+    const textPos = {
+      x: center.x + (radius - knobRadius * 2) * Math.cos(degToRad(textAngle)),
+      y: center.y + (radius - knobRadius * 2) * Math.sin(degToRad(textAngle))
+    };
+
+    return (
+      <text
+        key={index}
+        x={textPos.x}
+        y={textPos.y}
+        fontSize="10"
+        fill={color}
+        style={{ userSelect: 'none' }}
+        textAnchor="middle"
+      >
+        {index === 0 ? 'Orange' : index === 1 ? 'Yellow' : index === 2 ? 'Green' : index === 3 ? 'Blue' : index === 4 ? 'Purple' : 'Red'}
+      </text>
+    );
+  });
  
 
   // Draw the knobs and hex values
@@ -290,9 +324,9 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, onChange }) 
   return (
     <svg ref={svgRef} width={2 * (radius + knobRadius * 2) * 1.25} height={2 * (radius + knobRadius * 2) * 1.25}>
       {rainbowGradient}
-      {outlines}
       {knobElements}
       {colorDisplay()}
+      {textElements}
     </svg>
   );
 };
