@@ -42,7 +42,7 @@ function App() {
       <div className="container">
         <div className="grid"></div>
         <div className="slider">
-          <CircularSlider minimumDistance={5} onChange={handleSliderChange}></CircularSlider>
+          <CircularSlider minimumDistance={10} knobRadius={7.5} onChange={handleSliderChange}></CircularSlider>
           <button onClick={handleSubmit}>Submit</button>
         </div>
         <div className="slider">

@@ -3,8 +3,40 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  /* backdrop-filter: blur(3px); */
   background-color: rgba(0, 0, 0, 0.25);
   border-radius: 10%;
-  /* filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1)); */
+}
+
+@keyframes knobActive {
+  0% {
+    opacity: 0.25;
+    scale: 1;
+  }
+  100% {
+    opacity: 1;
+    scale: 1.25;
+  }
+}
+
+@keyframes knobInactive {
+  0% {
+    opacity: 1;
+    scale: 1.25;
+  }
+  100% {
+    opacity: 0.25;
+    scale: 1;
+  }
+}
+
+.knob-active {
+  animation: knobActive 0.3s forwards;
+}
+
+.knob-inactive {
+  animation: knobInactive 0.3s forwards;
+}
+
+.knob {
+  opacity: 0.25;
 }
