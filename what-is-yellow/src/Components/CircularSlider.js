@@ -20,22 +20,50 @@ const clampAngle = (angle) => (angle + 360) % 360;
 // Function to clamp an angle between two other angles with a minimum distance constraint
 const clampBetween = (angle, min, max, minDist = 10) => {
   const clampAngle = (ang) => (ang % 360 + 360) % 360; // Ensure angles are between 0 and 359
-  const a = clampAngle(angle);
-  const mi = clampAngle(min);
-  const ma = clampAngle(max);
-  const dist = (x, y) => (y - x + 360) % 360; // Calculate distance between two angles
-
   const minDistClamped = Math.min(minDist, 360); // Ensure minDist is within valid range
-
-  if (mi <= ma) {
-    if (a < mi + minDistClamped) return mi + minDistClamped;
-    if (a > ma - minDistClamped) return ma - minDistClamped;
-  } else {
-    if (a > ma && a < mi + minDistClamped) return mi + minDistClamped;
-    if (a > ma - minDistClamped && a < mi) return ma - minDistClamped;
-    if (a < mi && a > ma) return a - mi < ma - a ? mi + minDistClamped : ma - minDistClamped;
+  const currentPos = clampAngle(angle);
+  const lowerBound = clampAngle(min + minDistClamped); // Calculate the lower bound of the segment
+  const upperBound = clampAngle(max - minDistClamped); // Calculate the upper bound of the segment
+  //TODO edge case when theyre less than mindist away from 0 line
+  var maxxedUp = false;
+  if (lowerBound > upperBound) { // if ma is past 0 line
+   maxxedUp = true; // set flag
   }
-  return a;
+  const midPoint = (lowerBound + (maxxedUp ? upperBound + 360 : upperBound)) / 2; // Calculate the midpoint of the segment
+  const flippedMidPoint = (midPoint + 180) % 360; // Calculate the opposite side of the midpoint
+
+  const dist = (x, y) => (y - x + 360) % 360; // Calculate distance between two angles  <== makoto
+
+  
+  if ( midPoint == 0) {
+    if (currentPos < lowerBound && currentPos > flippedMidPoint) return lowerBound; //left of mid
+    if (currentPos > upperBound && currentPos < flippedMidPoint) return upperBound; //right of mid
+    return currentPos;
+  } else if (flippedMidPoint == 0) {
+    if (currentPos > upperBound && currentPos < 360) return upperBound; //right of mid
+    if (currentPos < lowerBound && currentPos > 0) return lowerBound; //left of mid
+    return currentPos;
+  } else if (midPoint > flippedMidPoint) { // 0 line is to the right
+    if (currentPos < lowerBound && currentPos > flippedMidPoint) return lowerBound; //left of mid
+    if (!maxxedUp && ((currentPos > upperBound && currentPos < 361) || (currentPos > -1 && currentPos < flippedMidPoint))) return upperBound; //right of mid, max isnt past 0 line, accounting for max -> 360 / 0 -> fmp
+    if (maxxedUp && currentPos > upperBound && currentPos < flippedMidPoint) return upperBound; //rightt of mid, max past 0 line
+    return currentPos;
+  } else if (midPoint < flippedMidPoint) { // 0 line is to the left
+    if (currentPos > upperBound && currentPos < flippedMidPoint) return upperBound; //right of mid
+    if (!maxxedUp && ((currentPos < lowerBound && currentPos > -1) || (currentPos < 361 && currentPos > flippedMidPoint))) return lowerBound; //left of mid, min isnt past 0 line, accounting for min -> 360 / 0 -> fmp
+    if (maxxedUp && currentPos < lowerBound && currentPos > flippedMidPoint) return lowerBound; //left of mid, max past 0 line
+    return currentPos;
+  }
+
+  // if (lowerBound <= upperBound) {
+  //   if (currentPos <lowerBound+ minDistClamped) return lowerBound+ minDistClamped;
+  //   if (currentPos >upperBound- minDistClamped) return upperBound- minDistClamped;
+  // } else {
+  //   if (currentPos >upperBound&& currentPos <lowerBound+ minDistClamped) return lowerBound+ minDistClamped;
+  //   if (currentPos >upperBound- minDistClamped && currentPos < lowerBound) return upperBound- minDistClamped;
+  //   if (currentPos <lowerBound&& currentPos > upperBound) return currentPos -lowerBound<upperBound- currentPos ?lowerBound+ minDistClamped :upperBound- minDistClamped;
+  // }
+  // return currentPos;
 };
 
 // Calculate the average hue of a segment
