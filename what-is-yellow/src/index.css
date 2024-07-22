@@ -31,7 +31,7 @@ code {
   background-size: 50px 50px;
   background-image: linear-gradient(to right, #cccccc 1px, transparent 1px),
                     linear-gradient(to bottom, #cccccc 1px, transparent 1px);
-  animation: scrollGrid 10s linear infinite;
+  animation: scrollGrid 20s linear infinite;
   position: absolute;
   top: 0;
   left: 0;
@@ -43,12 +43,12 @@ code {
     transform: translate(0, 0);
   }
   100% {
-    transform: translate(-50%, -50%);
+    transform: translate(-1000px, -1000px);
   }
 }
 
 .slider {
-  position: relative;
-  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
-  backdrop-filter: blur(3px);
+  justify-content: center;
+  align-items: center;
+  border-radius: 10%;
 }

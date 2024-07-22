@@ -92,10 +92,15 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
 
   // Calculate the angles for each knob based on even spacing
   useEffect(() => {
-    const angleStep = 360 / knobs;
-    setAngles((prevAngles) =>
-      prevAngles.map((_, index) => angleStep * index)
-    );
+    if(initialPositions.length > 0){
+      setAngles(initialPositions);
+    }
+    else{
+      const angleStep = 360 / knobs;
+      setAngles((prevAngles) =>
+        prevAngles.map((_, index) => angleStep * index)
+      );
+    }
   }, [knobs]);
 
   // Update the center and bounding rect when the size or padding changes
@@ -216,7 +221,9 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
     if (svgRef.current) {
       svgRef.current.addEventListener('wheel', handleWheel);
       return () => {
-        svgRef.current.removeEventListener('wheel', handleWheel);
+        if (svgRef.current) {
+          svgRef.current.removeEventListener('wheel', handleWheel);
+        }
       };
     }
   }, [hoveredIndex]);
@@ -300,41 +307,37 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
 
   // Draw the knobs and hex values
   const knobElements = knobPositions.map((pos, index) => {
-    //const color = hslToHex(pos.angle, 100, 50);
-
-    console.log(`index: ${index}, activeIndex: ${activeIndex}, hoveredIndex: ${hoveredIndex}, previousActiveIndex: ${previousActiveIndex}, lastHovered: ${lastHovered}`);
     let className = "";
-    if (activeIndex === index || hoveredIndex === index) {
+    // hovered, not dragging
+    if (hoveredIndex === index && activeIndex === null) {
       className = "knob-active";
-    } else if ((previousActiveIndex === index && activeIndex === null) || (lastHovered === index && hoveredIndex === null && activeIndex !== index)) {
+    } 
+    // dragging
+    else if (activeIndex === index) {
+      className = "knob-dragging";
+    }
+    // stop dragging, still hovered
+    else if (previousActiveIndex === index && activeIndex === null && hoveredIndex === index) {
+      className = "knob-dragging-end";
+    }
+    // stop dragging, not hovered
+    else if (previousActiveIndex === index && activeIndex === null && hoveredIndex !== index && lastHovered === null) {
+      className = "knob-dragging-end-no-hover";
+    }
+    else if (previousActiveIndex === index && activeIndex === null && hoveredIndex !== index) {
       className = "knob-inactive";
-    } else{
+    }
+    // just stopped hovering
+    else if (previousActiveIndex === null && activeIndex === null && hoveredIndex === index) {
+      className = "knob-dragging-end-no-hover";
+    }
+    // default
+    else {
       className = "knob";
     }
 
     return (
       <g key={index}>
-        {/* <text
-          x={center.x + (radius - thickness * 2) * Math.cos(degToRad(pos.angle))}
-          y={center.y + (radius - thickness * 2) * Math.sin(degToRad(pos.angle))}
-          fontSize={10 * size}
-          fill="black"
-          style={{ userSelect: 'none' }}
-          textAnchor="middle"
-        >
-          {color}
-        </text>
-        <text
-          x={center.x + (radius + thickness * 2) * Math.cos(degToRad(pos.angle))}
-          y={center.y + (radius + thickness * 2) * Math.sin(degToRad(pos.angle))}
-          fontSize={10 * size}
-          fill="black"
-          style={{ userSelect: 'none' }}
-          textAnchor="middle"
-        >
-          {Math.round(pos.angle)}
-        </text> */}
-
         <line
           x1={center.x + (radius - thickness) * Math.cos(degToRad(pos.angle))}
           y1={center.y + (radius - thickness) * Math.sin(degToRad(pos.angle))}
@@ -359,29 +362,6 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
           pointerEvents={'bounding-box'}
           style={{ cursor: 'pointer' }}
         />
-
-        {/* <circle
-          cx={center.x + (radius - thickness) * Math.cos(degToRad(pos.angle))}
-          cy={center.y + (radius - thickness) * Math.sin(degToRad(pos.angle))}
-          r={strokeThickness}
-          fill="black"
-          strokeWidth={strokeThickness}
-          onMouseDown={handleMouseDown(index)}
-          onMouseEnter={handleMouseEnter(index)}
-          onMouseLeave={handleMouseLeave(index)}
-        />
-
-        <circle
-          id={"outerCircle" + index}
-          cx={center.x + (radius + thickness) * Math.cos(degToRad(pos.angle))}
-          cy={center.y + (radius + thickness) * Math.sin(degToRad(pos.angle))}
-          r={strokeThickness}
-          fill="black"
-          strokeWidth={strokeThickness}
-          onMouseDown={handleMouseDown(index)}
-          onMouseEnter={handleMouseEnter(index)}
-          onMouseLeave={handleMouseLeave(index)}
-        /> */}
       </g>
     );
   });

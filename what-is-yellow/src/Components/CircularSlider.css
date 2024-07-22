@@ -4,29 +4,70 @@
   justify-content: center;
   align-items: center;
   background-color: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(2px);
   border-radius: 10%;
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
 }
 
 @keyframes knobActive {
   0% {
     opacity: 0.25;
-    scale: 1;
   }
   100% {
     opacity: 1;
-    scale: 1.25;
   }
 }
 
 @keyframes knobInactive {
   0% {
     opacity: 1;
-    scale: 1.25;
   }
   100% {
     opacity: 0.25;
-    scale: 1;
   }
+}
+
+
+@keyframes knobDragging {
+  0% {
+    scale: 1.25;
+  }
+  100% {
+    scale: 1.5;
+  }
+}
+
+@keyframes knobDraggingEnd {
+  0% {
+    scale: 1.5;
+  }
+  100% {
+    scale: 1.25;
+  }
+}
+
+@keyframes knobDraggingEndNoHover {
+  0% {
+    scale: 1.5;
+    opacity: 1;
+  }
+  100% {
+    scale: 1;
+    opacity: 0.25;
+  }
+
+}
+
+.knob-dragging {
+  animation: knobDragging 0.3s forwards;
+}
+
+.knob-dragging-end {
+  animation: knobDraggingEnd 0.3s forwards;
+}
+
+.knob-dragging-end-no-hover {
+  animation: knobDraggingEndNoHover 0.3s forwards;
 }
 
 .knob-active {
