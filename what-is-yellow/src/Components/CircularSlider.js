@@ -85,11 +85,6 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
   const [svgRect, setSvgRect] = useState(null);
   const svgRef = useRef(null);
 
-  // State for managing the info box
-  const [knobInfo, setKnobInfo] = useState(Array(knobs).fill(false));
-  const [infoBoxContent, setInfoBoxContent] = useState("");
-  const [infoBoxPosition, setInfoBoxPosition] = useState({ x: 0, y: 0 });
-
   // Calculate the angles for each knob based on even spacing
   useEffect(() => {
     if(initialPositions.length > 0){
@@ -111,32 +106,6 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
       setCenter({ x: rect.width / 2, y: rect.height / 2 });
     }
   }, [radius, knobRadius]);
-
-  // Event handler for clicking knobs
-  // -> displays additional information about the color in a popup
-  const handleKnobClick = (index) => (e) => {
-    const color = hslToHex(angles[index], 100, 50);
-    const knobPosition = knobPositions[index];
-
-    if (knobInfo[index]) {
-      setKnobInfo((prevInfo) => {
-        const newInfo = [...prevInfo];
-        newInfo[index] = false;
-        setInfoBoxContent(`Info for knob ${index + 1}: ${color}`);
-        setInfoBoxPosition({ x: knobPosition.x + 20, y: knobPosition.y });
-        return newInfo;
-      });
-    } 
-    else {
-      setKnobInfo((prevInfo) => {
-        const newInfo = [...prevInfo];
-        newInfo[index] = true;
-        setInfoBoxContent(`Info for knob ${index + 1}: ${color}`);
-        setInfoBoxPosition({ x: knobPosition.x + 20, y: knobPosition.y });
-        return newInfo;
-      });
-    }
-  };
 
   // Event handlers for dragging knobs
   const handleMouseDown = useCallback((index) => (e) => {
@@ -358,7 +327,6 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
           onMouseDown={handleMouseDown(index)}
           onMouseEnter={handleMouseEnter(index)}
           onMouseLeave={handleMouseLeave(index)}
-          onDoubleClick={handleKnobClick(index)}
           pointerEvents={'bounding-box'}
           style={{ cursor: 'pointer' }}
         />
@@ -375,9 +343,6 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
         {textElements}
         {knobElements}
       </svg>
-      {knobInfo.some((info) => info) && (
-        <InfoBox content={infoBoxContent} position={infoBoxPosition} />
-      )}
     </div>
   );
 };

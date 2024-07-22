@@ -52,3 +52,7 @@ code {
   align-items: center;
   border-radius: 10%;
 }
+
+.colourblind {
+  filter: url(#protanopiaColourMatrix)
+}

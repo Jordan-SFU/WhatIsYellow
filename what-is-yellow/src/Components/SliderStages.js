@@ -10,10 +10,10 @@ import { MobileStepper, Button, Typography } from "@mui/material/";
 const SliderStages = () => {
   const [sliderValues, setSliderValues] = useState({
     stage1: [0, 0],
-    stage2: [0, 0],
-    stage3: [0, 0, 0],
-    stage4: [0, 0, 0, 0],
-    stage5: [0, 0, 0, 0, 0],
+    stage2: [0, 0, 0, 0, 0, 0],
+    stage3: [0, 0, 0, 0, 0, 0, 0],
+    stage4: [0, 0, 0, 0, 0, 0],
+    stage5: [0, 0, 0, 0, 0, 0],
     stage6: [0, 0, 0, 0, 0, 0]
   });
   const [activeStep, setActiveStep] = useState(0);
@@ -26,53 +26,78 @@ const SliderStages = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
-  const handleSubmit = async () => {
-    const collectionRef = collection(db, "colour wheel default");
-    const payload = { "color regions": sliderValues };
+  const handleSubmit = async (currentStage) => {
+    const stageKey = "stage" + currentStage;
+    const currentValues = sliderValues[stageKey];
+
+    console.log("Submitting stage", currentStage, "with values", currentValues);
+
+    if (currentValues.includes(undefined)) {
+      console.error(`Invalid data for stage ${currentStage}:`, currentValues);
+      return;
+    }
+
+    const collectionRef = collection(db, "ColourWheel-" + currentStage);
+    const payload = { "Regions": currentValues };
 
     await addDoc(collectionRef, payload);
 
-    const docRef = doc(db, "colour wheel default", "main");
+    const docRef = doc(db, "ColourWheel-" + currentStage, "Main");
     const docSnap = await getDoc(docRef);
 
+    // if it does not exist, create it
+    if (!docSnap.exists()) {
+        await setDoc(docRef, { "Regions": currentValues, n: 1 });
+        return;
+    }
+    
     let n = docSnap.data().n;
-    let regions = docSnap.data()["color regions"];
+    let regions = docSnap.data()["Regions"];
 
-    let newRegions = Object.keys(regions).reduce((acc, key) => {
-      acc[key] = regions[key].map((region, index) => {
-        return (region * n + sliderValues[key][index]) / (n + 1);
-      });
-      return acc;
-    }, {});
+    // Calculate new regions
+    const newRegions = regions.map((region, index) => {
+        const newRegion = (region * n + currentValues[index]) / (n + 1);
+        return newRegion;
+    });
 
-    await setDoc(docRef, { "color regions": newRegions, n: n + 1 });
+    await setDoc(docRef, { "Regions": newRegions, n: n + 1 });
   };
 
   const handleSliderChange = (stage, index, angle) => {
+    console.log(`Handling slider change for stage: ${stage}, index: ${index}, angle: ${angle}`);
     setSliderValues((prevValues) => {
       const newStageValues = [...prevValues[stage]];
-      newStageValues[index] = angle;
+      if (index < newStageValues.length) {
+        newStageValues[index] = angle;
+      } else {
+        console.error(`Index ${index} out of bounds for stage ${stage}`);
+      }
       return { ...prevValues, [stage]: newStageValues };
     });
   };
 
   const stages = [
-    <CircularSlider key="stage1" size={2.5} onChange={(angle, index) => handleSliderChange('stage1', index, angle)} knobs={2} textValues={["Yellow", "Not Yellow"]} />,
-    <CircularSlider key="stage2" size={2.5} onChange={(angle, index) => handleSliderChange('stage2', index, angle)} knobs={6} />,
-    <CircularSlider key="stage3" size={2.5} onChange={(angle, index) => handleSliderChange('stage3', index, angle)} knobs={7} textValues={["Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Purple"]}/>,
-    <div style={{filter:
-        <filter>
-            <feColorMatrix
-                id="protanopiaColourMatrix"
-                type="matrix"
-                values=".56667 .43333 0      0 0
-                        .55833 .44167 0      0 0
-                        0      .24167 .75833 0 0
-                        0      0      0      1 0" />
-        </filter>
-    }}><CircularSlider key="stage4" size={2.5} onChange={(angle, index) => handleSliderChange('stage4', index, angle)} knobs={6} /></div>,
-    <CircularSlider key="stage5" size={2.5} onChange={(angle, index) => handleSliderChange('stage5', index, angle)} knobs={6} />,
-    <CircularSlider key="stage6" size={2.5} onChange={(angle, index) => handleSliderChange('stage6', index, angle)} knobs={6} />
+    <CircularSlider key="stage1" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={2} textValues={["Yellow", "Not Yellow"]} />,
+    <CircularSlider key="stage2" size={2.5} onChange={(index, angle) => handleSliderChange('stage2', index, angle)} knobs={6} />,
+    <CircularSlider key="stage3" size={2.5} onChange={(index, angle) => handleSliderChange('stage3', index, angle)} knobs={7} textValues={["Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Purple"]}/>,
+    <div className="colourblind">
+        <svg width="0" height="0">
+            <defs>
+                <filter id="protanopiaColourMatrix">
+                    <feColorMatrix
+                        id="protanopiaColourMatrix"
+                        type="matrix"
+                        values=".56667 .43333 0      0 0
+                                .55833 .44167 0      0 0
+                                0      .24167 .75833 0 0
+                                0      0      0      1 0" />
+                </filter>
+            </defs>
+        </svg>
+        <CircularSlider key="stage4" size={2.5} onChange={(index, angle) => handleSliderChange('stage4', index, angle)} knobs={6} />
+    </div>,
+    <CircularSlider key="stage5" size={2.5} onChange={(index, angle) => handleSliderChange('stage5', index, angle)} knobs={6} />,
+    <CircularSlider key="stage6" size={2.5} onChange={(index, angle) => handleSliderChange('stage6', index, angle)} knobs={6} />
   ];
 
   return (
@@ -99,7 +124,7 @@ const SliderStages = () => {
           </Button>
         }
       />
-      <SubmitBar onSubmit={handleSubmit} style={{ position: 'fixed', bottom: 0, width: '100%' }} />
+      <SubmitBar onSubmit={() => handleSubmit(activeStep + 1)} style={{ position: 'fixed', bottom: 0, width: '100%' }} />
     </div>
   );
 }
