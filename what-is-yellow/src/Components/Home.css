@@ -1,0 +1,97 @@
+.home {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+    z-index: 1;
+    user-select: none;
+}
+
+.title {
+    margin: 20px 0;
+}
+
+/* Rainbow text */
+.rainbow-text span {
+    display: inline-block;
+    font-size: 1.5em;
+}
+
+@keyframes wave {
+    0% {
+        transform: translate(0, -5px);
+    }
+
+    100% {
+        transform: translate(0, 5px);
+    }
+}
+
+.rainbow-text .c {
+    color: #FF0000;
+    animation: wave 1s infinite alternate ease-in-out;
+    animation-delay: -0.6s;
+    animation-fill-mode: both;
+}
+
+.rainbow-text .o1 {
+    color: #FF7F00;
+    animation: wave 1s infinite alternate ease-in-out;
+    animation-delay: -0.5s;
+    animation-fill-mode: both;
+}
+
+.rainbow-text .l {
+    color: #FFFF00;
+    animation: wave 1s infinite alternate ease-in-out;
+    animation-delay: -0.4s;
+    animation-fill-mode: both;
+}
+
+.rainbow-text .o2 {
+    color: #00FF00;
+    animation: wave 1s infinite alternate ease-in-out;
+    animation-delay: -0.3s;
+    animation-fill-mode: both;
+}
+
+.rainbow-text .u {
+    color: #0000FF;
+    animation: wave 1s infinite alternate ease-in-out;
+    animation-delay: -0.2s;
+    animation-fill-mode: both;
+}
+
+.rainbow-text .r {
+    color: #4B0082;
+    animation: wave 1s infinite alternate ease-in-out;
+    animation-delay: -0.1s;
+    animation-fill-mode: both;
+}
+
+.start-button {
+    background: var(--primary-color);
+    color: white;
+    padding: 10px 10px;
+    border: none;
+    border-radius: 100%;
+    cursor: pointer;
+    font-size: 1.2em;
+    margin-top: 20px;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.25));
+    scale: 1;
+    transition: 0.3s ease;
+}
+
+.start-button:hover {
+    background: #ff9900;
+    scale: 1.05;
+    transition: 0.3s ease;
+}
+
+.start-button:active {
+    background: #ff6600;
+    scale: 0.95;
+}

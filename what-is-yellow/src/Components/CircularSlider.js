@@ -351,7 +351,7 @@ const CircularSlider = ({
   });
 
   return (
-    <div className='CircularSlider'>
+    <>
       <svg ref={svgRef} width={radius * 2.5} height={radius * 2.5}>
         {rainbowGradient}
         {outlines()}
@@ -359,7 +359,7 @@ const CircularSlider = ({
         {textElements}
         {knobElements}
       </svg>
-    </div>
+    </>
   );
 };
 

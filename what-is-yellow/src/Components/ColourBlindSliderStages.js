@@ -1,10 +1,10 @@
 import CircularSlider from "./CircularSlider";
 import SubmitBar from "./SubmitBar";
-import '../index.css'; // Import the CSS file
 import { useState } from "react";
 import React from "react";
 import { MobileStepper, Button, Typography } from "@mui/material/";
 import { ProtanopiaFilter, ProtanomalyFilter, DeuteranopiaFilter, DeuteranomalyFilter, TritanopiaFilter, TritanomalyFilter, AchromatopsiaFilter, AchromatomalyFilter } from "./Filters";
+import './CircularSlider.css';
 
 const SliderStages = () => {
   const [sliderValues, setSliderValues] = useState({
@@ -101,7 +101,7 @@ const SliderStages = () => {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Typography variant="h3" style={{ textAlign: 'center', marginTop: '5vh' }}>What is Yellow?</Typography>
       <Typography variant="h6" style={{ textAlign: 'center'}}>{types[activeStep]}</Typography>
-      <div className="stage" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div className="CircularSlider" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         {stages[activeStep]}
       </div>
       <MobileStepper 
@@ -109,7 +109,7 @@ const SliderStages = () => {
         activeStep={activeStep} 
         color="primary"
         position="static"
-        style={{ justifyContent: 'center', alignItems: 'center', marginBottom: '10vh' }}
+        style={{ justifyContent: 'center', alignItems: 'center', marginBottom: '10vh', backgroundColor: 'transparent' }}
       />
       <SubmitBar hasSubmitted={submitted} onNext={() => handleNext()} onSubmit={() => handleSubmit(activeStep + 1)} currentStage={activeStep + 1} numStages={9} style={{ position: 'fixed', bottom: 0, width: '100%' }} />
     </div>
