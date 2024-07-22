@@ -49,7 +49,7 @@ const SliderStages = () => {
 
   const stages = [
     <div>
-        <CircularSlider key="stage1" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={6} />
+        <CircularSlider key="stage1" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={6} angleOffset={30} />
     </div>,
     <div className="protanopia">
         <ProtanopiaFilter />

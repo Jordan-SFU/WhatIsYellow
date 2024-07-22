@@ -2,7 +2,19 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import InfoBox from './InfoBox';
 import './CircularSlider.css';
 
-const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 10, strokeThickness = 3, size = 3, centerScale = 1, textValues = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple"], minimumDistance = 10, onChange, initialPositions = [] }) => {
+const CircularSlider = ({ 
+  radius = 100, 
+  knobRadius = 10, 
+  knobs = 6, 
+  thickness = 10, 
+  strokeThickness = 3, 
+  size = 3, 
+  centerScale = 1, 
+  textValues = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple"], 
+  minimumDistance = 10, 
+  onChange = (index, angle) => {console.log(`Index: ${index}, Angle: ${angle}`)}, 
+  initialPositions = [], 
+  angleOffset = 0 }) => {
     // Utility function to convert degrees to radians
   const degToRad = (deg) => (deg * Math.PI) / 180;
 
