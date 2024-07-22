@@ -75,7 +75,15 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
   thickness *= size;
   strokeThickness *= size;
 
-  const [angles, setAngles] = useState(Array(knobs).fill(0));
+  const [angles, setAngles] = useState(() => {
+    if (initialPositions.length > 0) {
+      return initialPositions;
+    } else {
+      const angleStep = 360 / knobs;
+      return Array.from({ length: knobs }, (_, index) => angleStep * index);
+    }
+  });
+
   const [activeIndex, setActiveIndex] = useState(null);
   const [previousActiveIndex, setPreviousActiveIndex] = useState(null);
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -85,24 +93,14 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
   const [svgRect, setSvgRect] = useState(null);
   const svgRef = useRef(null);
 
-  // Calculate the angles for each knob based on even spacing
+  //TODO: this gets called every frame, maybe memoize it
   useEffect(() => {
-    if(initialPositions.length > 0){
-      setAngles(initialPositions);
+    if (onChange) {
+      angles.forEach((angle, index) => {
+        onChange(index, Math.round(angle));
+      });
     }
-    else{
-      const angleStep = 360 / knobs;
-      setAngles((prevAngles) =>
-        prevAngles.map((_, index) => angleStep * index)
-      );
-    }
-
-    for (let i = 0; i < knobs; i++) {
-      if (onChange) {
-        onChange(i, Math.round(angles[i]));
-      }
-    }
-  }, [knobs, initialPositions]);
+  }, [angles]);
 
   // Update the center and bounding rect when the size or padding changes
   useEffect(() => {
@@ -154,7 +152,7 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
-  }, [svgRect, center, knobs, angles, clampAngle, clampBetween, onChange]);
+  }, [svgRect, center, knobs, angles, clampAngle, clampBetween]);
 
   // Event handlers for hovering knobs
   const handleMouseEnter = (index) => () => {

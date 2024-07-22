@@ -68,7 +68,7 @@ const SliderStages = () => {
   };
 
   const handleSliderChange = (stage, index, angle) => {
-    console.log(`Handling slider change for stage: ${stage}, index: ${index}, angle: ${angle}`);
+    console.log(`Stage: ${stage}, Index: ${index}, Angle: ${angle}`);
     setSliderValues((prevValues) => {
       const newStageValues = [...prevValues[stage]];
       if (index < newStageValues.length) {
