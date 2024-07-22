@@ -2,20 +2,21 @@ import CircularSlider from "./CircularSlider";
 import SubmitBar from "./SubmitBar";
 import '../index.css'; // Import the CSS file
 import { useState } from "react";
-import db from "../Firebase";
-import { onSnapshot, collection, addDoc, setDoc, doc, getDoc } from "firebase/firestore";
 import React from "react";
 import { MobileStepper, Button, Typography } from "@mui/material/";
-import { ProtanopiaFilter, DeuteranopiaFilter, TritanopiaFilter } from "./Filters";
+import { ProtanopiaFilter, ProtanomalyFilter, DeuteranopiaFilter, DeuteranomalyFilter, TritanopiaFilter, TritanomalyFilter, AchromatopsiaFilter, AchromatomalyFilter } from "./Filters";
 
 const SliderStages = () => {
   const [sliderValues, setSliderValues] = useState({
-    stage1: [0, 0],
+    stage1: [0, 0, 0, 0, 0, 0],
     stage2: [0, 0, 0, 0, 0, 0],
-    stage3: [0, 0, 0, 0, 0, 0, 0],
+    stage3: [0, 0, 0, 0, 0, 0],
     stage4: [0, 0, 0, 0, 0, 0],
     stage5: [0, 0, 0, 0, 0, 0],
-    stage6: [0, 0, 0, 0, 0, 0]
+    stage6: [0, 0, 0, 0, 0, 0],
+    stage7: [0, 0, 0, 0, 0, 0],
+    stage8: [0, 0, 0, 0, 0, 0],
+    stage9: [0, 0, 0, 0, 0, 0]
   });
   const [activeStep, setActiveStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -30,42 +31,7 @@ const SliderStages = () => {
   };
 
   const handleSubmit = async (currentStage) => {
-    const stageKey = "stage" + currentStage;
-    const currentValues = sliderValues[stageKey];
-
-    if (currentValues.includes(undefined)) {
-      console.error(`Invalid data for stage ${currentStage}:`, currentValues);
-      return;
-    }
-
-    const collectionRef = collection(db, "ColourWheel-" + currentStage);
-    const payload = { "Regions": currentValues };
-
-    await addDoc(collectionRef, payload);
-
-    const docRef = doc(db, "ColourWheel-" + currentStage, "Main");
-    let docSnap = await getDoc(docRef);
-
-    // if it does not exist, create it
-    if (!docSnap.exists()) {
-        await setDoc(docRef, { "Regions": currentValues, n: 1 });
-        setSubmitted(true);
-        return;
-    }
-    
-    let n = docSnap.data().n;
-    let regions = docSnap.data()["Regions"];
-
-    // Calculate new regions
-    const newRegions = regions.map((region, index) => {
-        const newRegion = (region * n + currentValues[index]) / (n + 1);
-        return newRegion;
-    });
-
-    await setDoc(docRef, { "Regions": newRegions, n: n + 1 });
-
     setSubmitted(true);
-
   };
 
   const handleSliderChange = (stage, index, angle) => {
@@ -82,38 +48,70 @@ const SliderStages = () => {
   };
 
   const stages = [
-    <CircularSlider key="stage1" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={2} textValues={["Yellow", "Not Yellow"]} />,
-    <CircularSlider key="stage2" size={2.5} onChange={(index, angle) => handleSliderChange('stage2', index, angle)} knobs={6} />,
-    <CircularSlider key="stage3" size={2.5} onChange={(index, angle) => handleSliderChange('stage3', index, angle)} knobs={7} textValues={["Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Purple"]}/>,
+    <div>
+        <CircularSlider key="stage1" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={6} />
+    </div>,
     <div className="protanopia">
         <ProtanopiaFilter />
-        <CircularSlider key="stage4" size={2.5} onChange={(index, angle) => handleSliderChange('stage4', index, angle)} knobs={6} />
+        <CircularSlider key="stage2" size={2.5} onChange={(index, angle) => handleSliderChange('stage2', index, angle)} knobs={6} />
+    </div>,
+    <div className="protanomaly">
+        <ProtanomalyFilter />
+        <CircularSlider key="stage3" size={2.5} onChange={(index, angle) => handleSliderChange('stage3', index, angle)} knobs={6} />
     </div>,
     <div className="deuteranopia">
         <DeuteranopiaFilter />
+        <CircularSlider key="stage4" size={2.5} onChange={(index, angle) => handleSliderChange('stage4', index, angle)} knobs={6} />
+    </div>,
+    <div className="deuteranomaly">
+        <DeuteranomalyFilter />
         <CircularSlider key="stage5" size={2.5} onChange={(index, angle) => handleSliderChange('stage5', index, angle)} knobs={6} />
     </div>,
     <div className="tritanopia">
         <TritanopiaFilter />
         <CircularSlider key="stage6" size={2.5} onChange={(index, angle) => handleSliderChange('stage6', index, angle)} knobs={6} />
+    </div>,
+    <div className="tritanomaly">
+        <TritanomalyFilter />
+        <CircularSlider key="stage7" size={2.5} onChange={(index, angle) => handleSliderChange('stage7', index, angle)} knobs={6} />
+    </div>,
+    <div className="achromatopsia">
+        <AchromatopsiaFilter />
+        <CircularSlider key="stage8" size={2.5} onChange={(index, angle) => handleSliderChange('stage8', index, angle)} knobs={6} />
+    </div>,
+    <div className="achromatomaly">
+        <AchromatomalyFilter />
+        <CircularSlider key="stage9" size={2.5} onChange={(index, angle) => handleSliderChange('stage9', index, angle)} knobs={6} />
     </div>
   ];
+
+  const types = [
+    "Normal",
+    "Protanopia",
+    "Protanomaly",
+    "Deuteranopia",
+    "Deuteranomaly",
+    "Tritanopia",
+    "Tritanomaly",
+    "Achromatopsia",
+    "Achromatomaly"
+];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Typography variant="h3" style={{ textAlign: 'center', marginTop: '5vh' }}>What is Yellow?</Typography>
-      <Typography variant="h6" style={{ textAlign: 'center'}}>Variant {activeStep + 1}</Typography>
+      <Typography variant="h6" style={{ textAlign: 'center'}}>{types[activeStep]}</Typography>
       <div className="stage" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         {stages[activeStep]}
       </div>
       <MobileStepper 
-        steps={6} 
+        steps={9} 
         activeStep={activeStep} 
         color="primary"
         position="static"
         style={{ justifyContent: 'center', alignItems: 'center', marginBottom: '10vh' }}
       />
-      <SubmitBar hasSubmitted={submitted} onNext={() => handleNext()} onSubmit={() => handleSubmit(activeStep + 1)} currentStage={activeStep + 1} numStages={6} style={{ position: 'fixed', bottom: 0, width: '100%' }} />
+      <SubmitBar hasSubmitted={submitted} onNext={() => handleNext()} onSubmit={() => handleSubmit(activeStep + 1)} currentStage={activeStep + 1} numStages={9} style={{ position: 'fixed', bottom: 0, width: '100%' }} />
     </div>
   );
 }

@@ -53,6 +53,34 @@ code {
   border-radius: 10%;
 }
 
-.colourblind {
+.protanopia {
   filter: url(#protanopiaColourMatrix)
+}
+
+.protanomaly {
+  filter: url(#protanomalyColourMatrix)
+}
+
+.deuteranopia {
+  filter: url(#deuteranopiaColourMatrix)
+}
+
+.deuteranomaly {
+  filter: url(#deuteranomalyColourMatrix)
+}
+
+.tritanopia {
+  filter: url(#tritanopiaColourMatrix)
+}
+
+.tritanomaly {
+  filter: url(#tritanomalyColourMatrix)
+}
+
+.achromatopsia {
+  filter: url(#achromatopsiaColourMatrix)
+}
+
+.achromatomaly {
+  filter: url(#achromatomalyColourMatrix)
 }
