@@ -96,7 +96,13 @@ const CircularSlider = ({ radius = 100, knobRadius = 10, knobs = 6, thickness = 
         prevAngles.map((_, index) => angleStep * index)
       );
     }
-  }, [knobs]);
+
+    for (let i = 0; i < knobs; i++) {
+      if (onChange) {
+        onChange(i, Math.round(angles[i]));
+      }
+    }
+  }, [knobs, initialPositions]);
 
   // Update the center and bounding rect when the size or padding changes
   useEffect(() => {

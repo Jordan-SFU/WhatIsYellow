@@ -17,9 +17,11 @@ const SliderStages = () => {
     stage6: [0, 0, 0, 0, 0, 0]
   });
   const [activeStep, setActiveStep] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
 
   const handleNext = () => {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    setSubmitted(false);
   };
 
   const handleBack = () => {
@@ -29,8 +31,6 @@ const SliderStages = () => {
   const handleSubmit = async (currentStage) => {
     const stageKey = "stage" + currentStage;
     const currentValues = sliderValues[stageKey];
-
-    console.log("Submitting stage", currentStage, "with values", currentValues);
 
     if (currentValues.includes(undefined)) {
       console.error(`Invalid data for stage ${currentStage}:`, currentValues);
@@ -43,11 +43,12 @@ const SliderStages = () => {
     await addDoc(collectionRef, payload);
 
     const docRef = doc(db, "ColourWheel-" + currentStage, "Main");
-    const docSnap = await getDoc(docRef);
+    let docSnap = await getDoc(docRef);
 
     // if it does not exist, create it
     if (!docSnap.exists()) {
         await setDoc(docRef, { "Regions": currentValues, n: 1 });
+        setSubmitted(true);
         return;
     }
     
@@ -61,6 +62,9 @@ const SliderStages = () => {
     });
 
     await setDoc(docRef, { "Regions": newRegions, n: n + 1 });
+
+    setSubmitted(true);
+
   };
 
   const handleSliderChange = (stage, index, angle) => {
@@ -104,7 +108,7 @@ const SliderStages = () => {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Typography variant="h3" style={{ textAlign: 'center', marginTop: '5vh' }}>What is Yellow?</Typography>
       <Typography variant="h6" style={{ textAlign: 'center'}}>Variant {activeStep + 1}</Typography>
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div className="stage" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         {stages[activeStep]}
       </div>
       <MobileStepper 
@@ -113,18 +117,8 @@ const SliderStages = () => {
         color="primary"
         position="static"
         style={{ justifyContent: 'center', alignItems: 'center', marginBottom: '10vh' }}
-        nextButton={
-          <Button onClick={handleNext} disabled={activeStep === 5}>
-            Next
-          </Button>
-        }
-        backButton={
-          <Button onClick={handleBack} disabled={activeStep === 0}>
-            Back
-          </Button>
-        }
       />
-      <SubmitBar onSubmit={() => handleSubmit(activeStep + 1)} style={{ position: 'fixed', bottom: 0, width: '100%' }} />
+      <SubmitBar hasSubmitted={submitted} onNext={() => handleNext()} onSubmit={() => handleSubmit(activeStep + 1)} currentStage={activeStep + 1} numStages={6} style={{ position: 'fixed', bottom: 0, width: '100%' }} />
     </div>
   );
 }
