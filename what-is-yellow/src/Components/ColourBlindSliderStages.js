@@ -6,6 +6,8 @@ import { MobileStepper, Button, Typography } from "@mui/material/";
 import { ProtanopiaFilter, ProtanomalyFilter, DeuteranopiaFilter, DeuteranomalyFilter, TritanopiaFilter, TritanomalyFilter, AchromatopsiaFilter, AchromatomalyFilter } from "./Filters";
 import './CircularSlider.css';
 
+import InfoIcon from '@mui/icons-material/Info';
+
 const SliderStages = () => {
   const [sliderValues, setSliderValues] = useState({
     stage1: [0, 0, 0, 0, 0, 0],
@@ -102,6 +104,12 @@ const SliderStages = () => {
       <Typography variant="h3" style={{ textAlign: 'center', marginTop: '5vh' }}>What is Yellow?</Typography>
       <Typography variant="h6" style={{ textAlign: 'center' }}>{types[activeStep]}</Typography>
       <div key={activeStep} className="CircularSlider" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="info-icon">
+          <InfoIcon style={{ fontSize: '2.5em' }} />
+          <div className="info-box">
+            drag the sliders or use the scroll wheel to adjust the regions
+          </div>
+        </div>
         {stages[activeStep]}
       </div>
       <MobileStepper

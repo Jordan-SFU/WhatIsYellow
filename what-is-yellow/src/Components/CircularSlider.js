@@ -13,7 +13,8 @@ const CircularSlider = ({
   textValues = ["red", "orange", "yellow", "green", "blue", "purple"], 
   minimumDistance = 10, 
   onChange = (index, angle) => {console.log(`Index: ${index}, Angle: ${angle}`)}, 
-  initialPositions = [], 
+  initialPositions = [],
+  readOnly = false, 
   angleOffset = 0 }) => {
     // Utility function to convert degrees to radians
   const degToRad = (deg) => (deg * Math.PI) / 180;
@@ -340,10 +341,10 @@ const CircularSlider = ({
           r={knobRadius}
           fill="none"
           stroke="none"
-          onMouseDown={handleMouseDown(index)}
-          onMouseEnter={handleMouseEnter(index)}
-          onMouseLeave={handleMouseLeave(index)}
-          pointerEvents={'bounding-box'}
+          onMouseDown={readOnly === true ? () => void(0): handleMouseDown(index)}
+          onMouseEnter={readOnly === true ? void(0) : handleMouseEnter(index)}
+          onMouseLeave={readOnly === true ? void(0) : handleMouseLeave(index)}
+          pointerEvents={readOnly === true ? 'none' : 'bounding-box'}
           style={{ cursor: 'pointer' }}
         />
       </g>

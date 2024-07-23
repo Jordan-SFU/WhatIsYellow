@@ -7,6 +7,7 @@ import { onSnapshot, collection, addDoc, setDoc, doc, getDoc } from "firebase/fi
 import React from "react";
 import { MobileStepper, Button, Typography } from "@mui/material/";
 import { ProtanopiaFilter, DeuteranopiaFilter, TritanopiaFilter } from "./Filters";
+import InfoIcon from '@mui/icons-material/Info';
 
 const SliderStages = () => {
   const [sliderValues, setSliderValues] = useState({
@@ -19,6 +20,7 @@ const SliderStages = () => {
   });
   const [activeStep, setActiveStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [newRegions, setNewRegions] = useState(null);
 
   const handleNext = () => {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
@@ -50,6 +52,7 @@ const SliderStages = () => {
     if (!docSnap.exists()) {
         await setDoc(docRef, { "Regions": currentValues, n: 1 });
         setSubmitted(true);
+        setNewRegions(currentValues); 
         return;
     }
     
@@ -65,7 +68,7 @@ const SliderStages = () => {
     await setDoc(docRef, { "Regions": newRegions, n: n + 1 });
 
     setSubmitted(true);
-
+    setNewRegions(newRegions);
   };
 
   const handleSliderChange = (stage, index, angle) => {
@@ -82,7 +85,7 @@ const SliderStages = () => {
   };
 
   const stages = [
-    <CircularSlider key="stage1" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={2} textValues={["yellow", "not yellow"]} />,
+    <CircularSlider key="stage1" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={2} textValues={["yellow", "not yellow"]}/>,
     <CircularSlider key="stage2" size={2.5} onChange={(index, angle) => handleSliderChange('stage2', index, angle)} knobs={6} />,
     <CircularSlider key="stage3" size={2.5} onChange={(index, angle) => handleSliderChange('stage3', index, angle)} knobs={7} textValues={["red", "orange", "yellow", "green", "blue", "indigo", "purple"]}/>,
     <div className="protanopia">
@@ -99,12 +102,55 @@ const SliderStages = () => {
     </div>
   ];
 
+  function renderSliderStage(activeStep, newRegions, handleSliderChange, submitted) {
+    if (!submitted) return null;
+  
+    switch (activeStep) {
+      case 0:
+        return <CircularSlider key="stage1" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={2} textValues={["yellow", "not yellow"]} readOnly={true} initialPositions={newRegions}/>;
+      case 1:
+        return <CircularSlider key="stage2" size={2.5} onChange={(index, angle) => handleSliderChange('stage2', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions}/>;
+      case 2:
+        return <CircularSlider key="stage3" size={2.5} onChange={(index, angle) => handleSliderChange('stage3', index, angle)} knobs={7} textValues={["red", "orange", "yellow", "green", "blue", "indigo", "purple"]} readOnly={true} initialPositions={newRegions}/>;
+      case 3:
+        return (
+          <div className="protanopia">
+            <ProtanopiaFilter />
+            <CircularSlider key="stage4" size={2.5} onChange={(index, angle) => handleSliderChange('stage4', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions}/>
+          </div>
+        );
+      case 4:
+        return (
+          <div className="deuteranopia">
+            <DeuteranopiaFilter />
+            <CircularSlider key="stage5" size={2.5} onChange={(index, angle) => handleSliderChange('stage5', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions}/>
+          </div>
+        );
+      case 5:
+        return (
+          <div className="tritanopia">
+            <TritanopiaFilter />
+            <CircularSlider key="stage6" size={2.5} onChange={(index, angle) => handleSliderChange('stage6', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions}/>
+          </div>
+        );
+      default:
+        return null;
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Typography variant="h3" style={{ textAlign: 'center', marginTop: '5vh' }}>What is Yellow?</Typography>
       <Typography variant="h6" style={{ textAlign: 'center'}}>Variant {activeStep + 1}</Typography>
       <div key={activeStep} className="CircularSlider" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="info-icon">
+          <InfoIcon style={{fontSize: '2.5em'}} />
+          <div className="info-box">
+            drag the sliders or use the scroll wheel to adjust the regions
+          </div>
+        </div>
         {stages[activeStep]}
+        {renderSliderStage(activeStep, newRegions, handleSliderChange, submitted)}
       </div>
       <MobileStepper 
         steps={6} 
