@@ -17,7 +17,7 @@ const router = createBrowserRouter([
     element: <ColourBlindSliderStages />,
   },
   {
-    path: '/normal-vision',
+    path: '/play',
     element: <SliderStages />,
   }
 ]);

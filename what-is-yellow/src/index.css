@@ -22,8 +22,8 @@ body {
 }
 
 .grid {
-  width: 200%;
-  height: 200%;
+  width: 500%;
+  height: 500%;
   background-size: 50px 50px;
   background-image: linear-gradient(to right, #e6e6e6 1px, transparent 1px),
                     linear-gradient(to bottom, #e6e6e6 1px, transparent 1px);

@@ -8,6 +8,17 @@
   backdrop-filter: blur(2px);
   border-radius: 10%;
   filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+  animation: slider 1s linear;
+}
+
+@keyframes slider {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+
 }
 
 @keyframes knobActive {

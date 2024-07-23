@@ -22,7 +22,7 @@ const Home = () => {
                 </Typography>
             </div>
             <div className= 'start-button'>
-                <Link to="/normal-vision">
+                <Link to="/play">
                     <Button style={{color: 'white'}}>
                         <StartIcon style={{ width: '50px', height: 'auto'}} />
                     </Button>

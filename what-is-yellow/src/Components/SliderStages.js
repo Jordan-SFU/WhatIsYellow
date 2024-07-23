@@ -1,6 +1,6 @@
 import CircularSlider from "./CircularSlider";
 import SubmitBar from "./SubmitBar";
-import '../index.css'; // Import the CSS file
+import '../index.css';
 import { useState } from "react";
 import db from "../Firebase";
 import { onSnapshot, collection, addDoc, setDoc, doc, getDoc } from "firebase/firestore";
@@ -82,9 +82,9 @@ const SliderStages = () => {
   };
 
   const stages = [
-    <CircularSlider key="stage1" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={2} textValues={["Yellow", "Not Yellow"]} />,
+    <CircularSlider key="stage1" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={2} textValues={["yellow", "not yellow"]} />,
     <CircularSlider key="stage2" size={2.5} onChange={(index, angle) => handleSliderChange('stage2', index, angle)} knobs={6} />,
-    <CircularSlider key="stage3" size={2.5} onChange={(index, angle) => handleSliderChange('stage3', index, angle)} knobs={7} textValues={["Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Purple"]}/>,
+    <CircularSlider key="stage3" size={2.5} onChange={(index, angle) => handleSliderChange('stage3', index, angle)} knobs={7} textValues={["red", "orange", "yellow", "green", "blue", "indigo", "purple"]}/>,
     <div className="protanopia">
         <ProtanopiaFilter />
         <CircularSlider key="stage4" size={2.5} onChange={(index, angle) => handleSliderChange('stage4', index, angle)} knobs={6} />
@@ -103,7 +103,7 @@ const SliderStages = () => {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Typography variant="h3" style={{ textAlign: 'center', marginTop: '5vh' }}>What is Yellow?</Typography>
       <Typography variant="h6" style={{ textAlign: 'center'}}>Variant {activeStep + 1}</Typography>
-      <div className="stage" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div key={activeStep} className="CircularSlider" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         {stages[activeStep]}
       </div>
       <MobileStepper 
@@ -111,7 +111,7 @@ const SliderStages = () => {
         activeStep={activeStep} 
         color="primary"
         position="static"
-        style={{ justifyContent: 'center', alignItems: 'center', marginBottom: '10vh' }}
+        style={{ justifyContent: 'center', alignItems: 'center', marginBottom: '10vh', backgroundColor: 'transparent' }}
       />
       <SubmitBar hasSubmitted={submitted} onNext={() => handleNext()} onSubmit={() => handleSubmit(activeStep + 1)} currentStage={activeStep + 1} numStages={6} style={{ position: 'fixed', bottom: 0, width: '100%' }} />
     </div>

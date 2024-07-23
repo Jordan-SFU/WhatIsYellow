@@ -10,7 +10,7 @@ const CircularSlider = ({
   strokeThickness = 3, 
   size = 3, 
   centerScale = 1, 
-  textValues = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple"], 
+  textValues = ["red", "orange", "yellow", "green", "blue", "purple"], 
   minimumDistance = 10, 
   onChange = (index, angle) => {console.log(`Index: ${index}, Angle: ${angle}`)}, 
   initialPositions = [], 
