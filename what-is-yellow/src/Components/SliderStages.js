@@ -126,28 +126,28 @@ const SliderStages = () => {
       case 0:
         return <CircularSlider key="stage1res" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={2} textValues={["yellow", "not yellow"]} readOnly={true} initialPositions={sliderValues['stage' + (activeStep + 1)]} extraDisplays={newRegions} />;
       case 1:
-        return <CircularSlider key="stage2res" size={2.5} onChange={(index, angle) => handleSliderChange('stage2', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions} />;
+        return <CircularSlider key="stage2res" size={2.5} onChange={(index, angle) => handleSliderChange('stage2', index, angle)} knobs={6} readOnly={true} initialPositions={sliderValues['stage' + (activeStep + 1)]} extraDisplays={newRegions} />;
       case 2:
-        return <CircularSlider key="stage3res" size={2.5} onChange={(index, angle) => handleSliderChange('stage3', index, angle)} knobs={7} textValues={["red", "orange", "yellow", "green", "blue", "indigo", "purple"]} readOnly={true} initialPositions={newRegions} />;
+        return <CircularSlider key="stage3res" size={2.5} onChange={(index, angle) => handleSliderChange('stage3', index, angle)} knobs={7} textValues={["red", "orange", "yellow", "green", "blue", "indigo", "purple"]} readOnly={true} initialPositions={sliderValues['stage' + (activeStep + 1)]} extraDisplays={newRegions} />;
       case 3:
         return (
           <div className="protanopia">
             <ProtanopiaFilter />
-            <CircularSlider key="stage4res" size={2.5} onChange={(index, angle) => handleSliderChange('stage4', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions} />
+            <CircularSlider key="stage4res" size={2.5} onChange={(index, angle) => handleSliderChange('stage4', index, angle)} knobs={6} readOnly={true} initialPositions={sliderValues['stage' + (activeStep + 1)]} extraDisplays={newRegions} />
           </div>
         );
       case 4:
         return (
           <div className="deuteranopia">
             <DeuteranopiaFilter />
-            <CircularSlider key="stage5res" size={2.5} onChange={(index, angle) => handleSliderChange('stage5', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions} />
+            <CircularSlider key="stage5res" size={2.5} onChange={(index, angle) => handleSliderChange('stage5', index, angle)} knobs={6} readOnly={true} initialPositions={sliderValues['stage' + (activeStep + 1)]} extraDisplays={newRegions} />
           </div>
         );
       case 5:
         return (
           <div className="tritanopia">
             <TritanopiaFilter />
-            <CircularSlider key="stage6res" size={2.5} onChange={(index, angle) => handleSliderChange('stage6', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions} />
+            <CircularSlider key="stage6res" size={2.5} onChange={(index, angle) => handleSliderChange('stage6', index, angle)} knobs={6} readOnly={true} initialPositions={sliderValues['stage' + (activeStep + 1)]} extraDisplays={newRegions} />
           </div>
         );
       default:
