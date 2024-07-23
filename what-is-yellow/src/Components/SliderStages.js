@@ -50,19 +50,36 @@ const SliderStages = () => {
 
     // if it does not exist, create it
     if (!docSnap.exists()) {
-        await setDoc(docRef, { "Regions": currentValues, n: 1 });
-        setSubmitted(true);
-        setNewRegions(currentValues); 
-        return;
+      await setDoc(docRef, { "Regions": currentValues, n: 1 });
+      setSubmitted(true);
+      setNewRegions(currentValues);
+      return;
     }
-    
+
     let n = docSnap.data().n;
     let regions = docSnap.data()["Regions"];
 
     // Calculate new regions
     const newRegions = regions.map((region, index) => {
-        const newRegion = (region * n + currentValues[index]) / (n + 1);
-        return newRegion;
+      const a = region;
+      const b = currentValues[index];
+
+      const radiansA = a * Math.PI / 180;
+      const radiansB = b * Math.PI / 180;
+
+      const sinA = Math.sin(radiansA) * n;
+      const cosA = Math.cos(radiansA) * n;
+      const sinB = Math.sin(radiansB);
+      const cosB = Math.cos(radiansB);
+
+      const total_sin = sinA + sinB;
+      const total_cos = cosA + cosB;
+
+      const mean_rad = Math.atan2(total_sin, total_cos);
+
+      const angle = Math.round(mean_rad * 180 / Math.PI);
+
+      return angle < 0 ? angle + 360 : angle;
     });
 
     await setDoc(docRef, { "Regions": newRegions, n: n + 1 });
@@ -85,52 +102,52 @@ const SliderStages = () => {
   };
 
   const stages = [
-    <CircularSlider key="stage1" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={2} textValues={["yellow", "not yellow"]}/>,
+    <CircularSlider key="stage1" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={2} textValues={["yellow", "not yellow"]} />,
     <CircularSlider key="stage2" size={2.5} onChange={(index, angle) => handleSliderChange('stage2', index, angle)} knobs={6} />,
-    <CircularSlider key="stage3" size={2.5} onChange={(index, angle) => handleSliderChange('stage3', index, angle)} knobs={7} textValues={["red", "orange", "yellow", "green", "blue", "indigo", "purple"]}/>,
+    <CircularSlider key="stage3" size={2.5} onChange={(index, angle) => handleSliderChange('stage3', index, angle)} knobs={7} textValues={["red", "orange", "yellow", "green", "blue", "indigo", "purple"]} />,
     <div className="protanopia">
-        <ProtanopiaFilter />
-        <CircularSlider key="stage4" size={2.5} onChange={(index, angle) => handleSliderChange('stage4', index, angle)} knobs={6} />
+      <ProtanopiaFilter />
+      <CircularSlider key="stage4" size={2.5} onChange={(index, angle) => handleSliderChange('stage4', index, angle)} knobs={6} />
     </div>,
     <div className="deuteranopia">
-        <DeuteranopiaFilter />
-        <CircularSlider key="stage5" size={2.5} onChange={(index, angle) => handleSliderChange('stage5', index, angle)} knobs={6} />
+      <DeuteranopiaFilter />
+      <CircularSlider key="stage5" size={2.5} onChange={(index, angle) => handleSliderChange('stage5', index, angle)} knobs={6} />
     </div>,
     <div className="tritanopia">
-        <TritanopiaFilter />
-        <CircularSlider key="stage6" size={2.5} onChange={(index, angle) => handleSliderChange('stage6', index, angle)} knobs={6} />
+      <TritanopiaFilter />
+      <CircularSlider key="stage6" size={2.5} onChange={(index, angle) => handleSliderChange('stage6', index, angle)} knobs={6} />
     </div>
   ];
 
   function renderSliderStage(activeStep, newRegions, handleSliderChange, submitted) {
     if (!submitted) return null;
-  
+
     switch (activeStep) {
       case 0:
-        return <CircularSlider key="stage1" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={2} textValues={["yellow", "not yellow"]} readOnly={true} initialPositions={newRegions}/>;
+        return <CircularSlider key="stage1res" size={2.5} onChange={(index, angle) => handleSliderChange('stage1', index, angle)} knobs={2} textValues={["yellow", "not yellow"]} readOnly={true} initialPositions={sliderValues['stage' + (activeStep + 1)]} extraDisplays={newRegions} />;
       case 1:
-        return <CircularSlider key="stage2" size={2.5} onChange={(index, angle) => handleSliderChange('stage2', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions}/>;
+        return <CircularSlider key="stage2res" size={2.5} onChange={(index, angle) => handleSliderChange('stage2', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions} />;
       case 2:
-        return <CircularSlider key="stage3" size={2.5} onChange={(index, angle) => handleSliderChange('stage3', index, angle)} knobs={7} textValues={["red", "orange", "yellow", "green", "blue", "indigo", "purple"]} readOnly={true} initialPositions={newRegions}/>;
+        return <CircularSlider key="stage3res" size={2.5} onChange={(index, angle) => handleSliderChange('stage3', index, angle)} knobs={7} textValues={["red", "orange", "yellow", "green", "blue", "indigo", "purple"]} readOnly={true} initialPositions={newRegions} />;
       case 3:
         return (
           <div className="protanopia">
             <ProtanopiaFilter />
-            <CircularSlider key="stage4" size={2.5} onChange={(index, angle) => handleSliderChange('stage4', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions}/>
+            <CircularSlider key="stage4res" size={2.5} onChange={(index, angle) => handleSliderChange('stage4', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions} />
           </div>
         );
       case 4:
         return (
           <div className="deuteranopia">
             <DeuteranopiaFilter />
-            <CircularSlider key="stage5" size={2.5} onChange={(index, angle) => handleSliderChange('stage5', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions}/>
+            <CircularSlider key="stage5res" size={2.5} onChange={(index, angle) => handleSliderChange('stage5', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions} />
           </div>
         );
       case 5:
         return (
           <div className="tritanopia">
             <TritanopiaFilter />
-            <CircularSlider key="stage6" size={2.5} onChange={(index, angle) => handleSliderChange('stage6', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions}/>
+            <CircularSlider key="stage6res" size={2.5} onChange={(index, angle) => handleSliderChange('stage6', index, angle)} knobs={6} readOnly={true} initialPositions={newRegions} />
           </div>
         );
       default:
@@ -141,20 +158,19 @@ const SliderStages = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Typography variant="h3" style={{ textAlign: 'center', marginTop: '5vh' }}>What is Yellow?</Typography>
-      <Typography variant="h6" style={{ textAlign: 'center'}}>Variant {activeStep + 1}</Typography>
+      <Typography variant="h6" style={{ textAlign: 'center' }}>Variant {activeStep + 1}</Typography>
       <div key={activeStep} className="CircularSlider" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <div className="info-icon">
-          <InfoIcon style={{fontSize: '2.5em'}} />
+          <InfoIcon style={{ fontSize: '2.5em' }} />
           <div className="info-box">
             drag the sliders or use the scroll wheel to adjust the regions
           </div>
         </div>
-        {stages[activeStep]}
-        {renderSliderStage(activeStep, newRegions, handleSliderChange, submitted)}
+        {!submitted ? stages[activeStep] : renderSliderStage(activeStep, newRegions, handleSliderChange, submitted)}
       </div>
-      <MobileStepper 
-        steps={6} 
-        activeStep={activeStep} 
+      <MobileStepper
+        steps={6}
+        activeStep={activeStep}
         color="primary"
         position="static"
         style={{ justifyContent: 'center', alignItems: 'center', marginBottom: '10vh', backgroundColor: 'transparent' }}

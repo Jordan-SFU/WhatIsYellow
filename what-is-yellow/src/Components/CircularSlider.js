@@ -2,21 +2,22 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import InfoBox from './InfoBox';
 import './CircularSlider.css';
 
-const CircularSlider = ({ 
-  radius = 100, 
-  knobRadius = 10, 
-  knobs = 6, 
-  thickness = 10, 
-  strokeThickness = 3, 
-  size = 3, 
-  centerScale = 1, 
-  textValues = ["red", "orange", "yellow", "green", "blue", "purple"], 
-  minimumDistance = 10, 
-  onChange = (index, angle) => {console.log(`Index: ${index}, Angle: ${angle}`)}, 
+const CircularSlider = ({
+  radius = 100,
+  knobRadius = 10,
+  knobs = 6,
+  thickness = 10,
+  strokeThickness = 3,
+  size = 3,
+  centerScale = 1,
+  textValues = ["red", "orange", "yellow", "green", "blue", "purple"],
+  minimumDistance = 10,
+  onChange = (index, angle) => { console.log(`Index: ${index}, Angle: ${angle}`) },
   initialPositions = [],
-  readOnly = false, 
+  readOnly = false,
+  extraDisplays = [],
   angleOffset = 0 }) => {
-    // Utility function to convert degrees to radians
+  // Utility function to convert degrees to radians
   const degToRad = (deg) => (deg * Math.PI) / 180;
 
   // Utility function to convert radians to degrees
@@ -43,14 +44,14 @@ const CircularSlider = ({
     //TODO edge case when theyre less than mindist away from 0 line
     var maxxedUp = false;
     if (lowerBound > upperBound) { // if ma is past 0 line
-    maxxedUp = true; // set flag
+      maxxedUp = true; // set flag
     }
     const midPoint = (lowerBound + (maxxedUp ? upperBound + 360 : upperBound)) / 2; // Calculate the midpoint of the segment
     const flippedMidPoint = (midPoint + 180) % 360; // Calculate the opposite side of the midpoint
 
     const dist = (x, y) => (y - x + 360) % 360; // Calculate distance between two angles  <== makoto
-  const betweenLowAndFMid = currentPos < lowerBound && currentPos > flippedMidPoint
-  const betweenHighAndFMid = currentPos > upperBound && currentPos < flippedMidPoint
+    const betweenLowAndFMid = currentPos < lowerBound && currentPos > flippedMidPoint - 1
+    const betweenHighAndFMid = currentPos > upperBound && currentPos < flippedMidPoint + 1
 
     if (midPoint > flippedMidPoint) { // 0 line is to the right
       if (betweenLowAndFMid) return lowerBound; //left of mid
@@ -82,7 +83,7 @@ const CircularSlider = ({
       Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))));
     return `#${f(0).toString(16).padStart(2, '0')}${f(8).toString(16).padStart(2, '0')}${f(4).toString(16).padStart(2, '0')}`;
   };
-  
+
   radius *= size;
   knobRadius *= size;
   thickness *= size;
@@ -126,6 +127,7 @@ const CircularSlider = ({
 
   // Event handlers for dragging knobs
   const handleMouseDown = useCallback((index) => (e) => {
+    if (readOnly) return;
     e.stopPropagation();
     setActiveIndex(index);
     setPreviousActiveIndex(index);
@@ -181,6 +183,7 @@ const CircularSlider = ({
 
   // Event handler for the scroll wheel
   const handleWheel = (e) => {
+    if (readOnly) return;
     if (lastHovered !== null) {
       e.preventDefault();
       const delta = e.deltaY > 0 ? 1 : -1;
@@ -204,6 +207,7 @@ const CircularSlider = ({
   };
 
   useEffect(() => {
+    if (readOnly) return;
     if (svgRef.current) {
       svgRef.current.addEventListener('wheel', handleWheel);
       return () => {
@@ -214,7 +218,7 @@ const CircularSlider = ({
     }
   }, [hoveredIndex]);
 
-  
+
 
   // Calculate the knob positions based on the angles
   const knobPositions = angles.map((angle) => ({
@@ -297,7 +301,7 @@ const CircularSlider = ({
     // hovered, not dragging
     if (hoveredIndex === index && activeIndex === null) {
       className = "knob-active";
-    } 
+    }
     // dragging
     else if (activeIndex === index) {
       className = "knob-dragging";
@@ -336,16 +340,31 @@ const CircularSlider = ({
         />
 
         <circle
-          cx={center.x + radius* Math.cos(degToRad(pos.angle))}
+          cx={center.x + radius * Math.cos(degToRad(pos.angle))}
           cy={center.y + radius * Math.sin(degToRad(pos.angle))}
           r={knobRadius}
           fill="none"
           stroke="none"
-          onMouseDown={readOnly === true ? () => void(0): handleMouseDown(index)}
-          onMouseEnter={readOnly === true ? void(0) : handleMouseEnter(index)}
-          onMouseLeave={readOnly === true ? void(0) : handleMouseLeave(index)}
-          pointerEvents={readOnly === true ? 'none' : 'bounding-box'}
+          onMouseDown={readOnly == true ? void (0) : handleMouseDown(index)}
+          onMouseEnter={readOnly == true ? void (0) : handleMouseEnter(index)}
+          onMouseLeave={readOnly == true ? void (0) : handleMouseLeave(index)}
+          pointerEvents={readOnly == true ? 'none' : 'bounding-box'}
           style={{ cursor: 'pointer' }}
+        />
+      </g>
+    );
+  });
+
+  const extraDisplayElements = extraDisplays.map((display, index) => {
+    return (
+      <g key={{index} + 'extra'}>
+        <line
+          x1={center.x + (radius - thickness) * Math.cos(degToRad(display))}
+          y1={center.y + (radius - thickness) * Math.sin(degToRad(display))}
+          x2={center.x + (radius + thickness) * Math.cos(degToRad(display))}
+          y2={center.y + (radius + thickness) * Math.sin(degToRad(display))}
+          stroke="black"
+          strokeWidth={strokeThickness}
         />
       </g>
     );
@@ -359,6 +378,7 @@ const CircularSlider = ({
         {colorDisplay()}
         {textElements}
         {knobElements}
+        {extraDisplayElements}
       </svg>
     </>
   );
